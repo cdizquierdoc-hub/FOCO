@@ -131,9 +131,11 @@ async function extraer(body, env, cors) {
 }
 
 async function imagen(body, env, cors) {
+  const { prompt, ambiente, referencia_base64, referencia_media } = body;
+  if (!prompt && !ambiente) return json({ error: "Falta el prompt" }, 400, cors);
+  // Por defecto usa Workers AI (plan gratuito de Cloudflare). Gemini solo si se activa IMAGE_PROVIDER=gemini.
+  if (env.IMAGE_PROVIDER !== "gemini") return await imagenWorkersAI(ambiente || prompt, env, cors);
   if (!env.GEMINI_API_KEY) return json({ error: "Falta GEMINI_API_KEY en el Worker" }, 500, cors);
-  const { prompt, referencia_base64, referencia_media } = body;
-  if (!prompt) return json({ error: "Falta el prompt" }, 400, cors);
   const entrada = [];
   if (referencia_base64) {
     entrada.push({ inlineData: { mimeType: referencia_media || "image/png", data: referencia_base64 } });
@@ -161,4 +163,25 @@ async function imagen(body, env, cors) {
   if (!img) return json({ error: "Gemini no devolvió imagen" }, 502, cors);
   const inl = img.inlineData || img.inline_data;
   return json({ imagen_base64: inl.data, media_type: inl.mimeType || inl.mime_type || "image/png" }, 200, cors);
+}
+
+// Ambiente vacío con Workers AI (gratis). La app pega encima la foto real del producto.
+async function imagenWorkersAI(ambiente, env, cors) {
+  if (!env.AI) return json({ error: "Falta el binding AI (Workers AI) en el Worker" }, 500, cors);
+  const prompt = "Fotografía publicitaria realista, horizontal, a pantalla completa, de borde a borde, " +
+    "sin personas, sin electrodomésticos, sin texto ni logotipos, sin bordes ni márgenes. " +
+    "Espacio despejado en el centro y a la derecha para colocar un producto. Escena: " + ambiente;
+  const res = await env.AI.run("@cf/stabilityai/stable-diffusion-xl-base-1.0", {
+    prompt, width: 1344, height: 768
+  });
+  let bytes;
+  if (res && typeof res.image === "string") {
+    return json({ imagen_base64: res.image, media_type: "image/png", incluye_producto: false }, 200, cors);
+  }
+  bytes = new Uint8Array(await new Response(res).arrayBuffer());
+  let binario = "";
+  for (let i = 0; i < bytes.length; i += 0x8000) {
+    binario += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  }
+  return json({ imagen_base64: btoa(binario), media_type: "image/png", incluye_producto: false }, 200, cors);
 }

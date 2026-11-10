@@ -700,10 +700,10 @@ async function obtenerAmbiente(tipo, ambienteDescripcion, nombreProducto) {
   if (estado.ambientes[tipo]) return { img: estado.ambientes[tipo], integrado: false };
   if (!URL_BASE()) return { img: escenaRespaldo(tipo), integrado: false };
   try {
-    const cuerpo = { prompt: promptIntegrado(ambienteDescripcion, nombreProducto) };
+    const cuerpo = { ambiente: ambienteDescripcion, prompt: promptIntegrado(ambienteDescripcion, nombreProducto) };
     if (estado.fotoBase64) { cuerpo.referencia_base64 = estado.fotoBase64; cuerpo.referencia_media = estado.fotoMedia; }
-    const { imagen_base64, media_type } = await llamarWorker("/api/imagen", cuerpo);
-    return { img: await cargarImagen(`data:${media_type};base64,${imagen_base64}`), integrado: true };
+    const { imagen_base64, media_type, incluye_producto } = await llamarWorker("/api/imagen", cuerpo);
+    return { img: await cargarImagen(`data:${media_type};base64,${imagen_base64}`), integrado: !!incluye_producto };
   } catch (e) {
     error((($("error").textContent) ? $("error").textContent + "\n" : "") + `No se pudo generar el ambiente "${tipo}" con IA (se usó un fondo de respaldo). Motivo: ${e.message}`);
     return { img: escenaRespaldo(tipo), integrado: false };

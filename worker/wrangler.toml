@@ -1,8 +1,11 @@
-name = "smc-fichas-api"
+name = "fichamba-api"
 main = "worker.js"
 compatibility_date = "2026-01-01"
 
-# Modelo de imagen (cámbialo aquí si Google renombra el modelo)
+# Binding de Workers AI (plan gratuito). Se llama AI.
+[ai]
+binding = "AI"
+
 [vars]
-IMAGE_MODEL = "gemini-2.5-flash-image"
+IMAGE_PROVIDER = "workers-ai"
 TEXT_MODEL = "claude-sonnet-5-5"
