@@ -678,9 +678,13 @@ async function llamarWorker(ruta, cuerpo) {
   const base = URL_BASE();
   if (!base) throw new Error("Pega primero la URL del intermediario (Cloudflare Worker).");
   const resp = await fetch(base + ruta, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(cuerpo) });
+  const texto = await resp.text();
   let datos = {};
-  try { datos = await resp.json(); } catch (e) { /* respuesta vacía */ }
-  if (!resp.ok) throw new Error(datos.error || `Error ${resp.status} del intermediario`);
+  try { datos = JSON.parse(texto); } catch (e) { datos = {}; }
+  if (!resp.ok) {
+    const detalle = datos.error || texto.replace(/\s+/g, " ").slice(0, 160) || "(respuesta vacía)";
+    throw new Error(`Error ${resp.status} en ${base}${ruta}: ${detalle}`);
+  }
   return datos;
 }
 
