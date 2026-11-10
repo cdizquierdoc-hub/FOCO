@@ -26,7 +26,7 @@ Lee el spec sheet adjunto y responde SOLO con un objeto JSON válido (sin texto 
 }
 Reglas:
 - "beneficios" debe tener exactamente 4 elementos, en el MISMO orden de las características que te indican abajo. El título es la característica (puedes pulirla), y el texto debe describir beneficio al cliente usando solo datos del spec sheet.
-- "escenas": el ambiente debe corresponder a la categoría. Refrigeradora o congelador: cocina. Lavadora o secadora: lavandería. Aire acondicionado: sala o dormitorio. Describe solo el ambiente, nunca el producto.
+- "escenas": el ambiente debe corresponder a la categoría. Refrigeradora o congelador: interior de cocina moderna de noche, con encimera de mármol oscuro, gabinetes de madera y luz LED cálida bajo los gabinetes. Lavadora o secadora: lavandería moderna con iluminación cálida. Aire acondicionado: sala o dormitorio. Describe solo el ambiente interior, nunca el producto, y nunca calles, exteriores ni ciudades.
 - "datos_destacados" tiene exactamente 4 elementos (uno por característica, en el mismo orden). Pon una cifra clave del spec sheet relacionada con esa característica (ej. nivel de ruido, capacidad, consumo) o null si no hay ninguna.
 - "despacho" son los datos logísticos y técnicos del spec sheet (marca, modelo, código, tipo, tecnología, eficiencia, capacidad neta, distribución de capacidad, medidas del producto, peso neto, medidas de caja, peso bruto, voltaje/frecuencia, refrigerante, unidades por contenedor, potencia). Máximo 15 elementos. Combina peso neto y bruto en una sola línea si hace falta. "valor" puede tener saltos de línea con \\n.
 - "icono" debe ser uno de: tag, modelo, qr, tipo, tech, energia, capacidad, medidas, peso, caja, voltaje, refrigerante, contenedor, potencia, default.
@@ -168,11 +168,15 @@ async function imagen(body, env, cors) {
 // Ambiente vacío con Workers AI (gratis). La app pega encima la foto real del producto.
 async function imagenWorkersAI(ambiente, env, cors) {
   if (!env.AI) return json({ error: "Falta el binding AI (Workers AI) en el Worker" }, 500, cors);
-  const prompt = "Fotografía publicitaria realista, horizontal, a pantalla completa, de borde a borde, " +
-    "sin personas, sin electrodomésticos, sin texto ni logotipos, sin bordes ni márgenes. " +
+  const prompt = "Fotografía de interiorismo premium para catálogo, horizontal, de borde a borde, " +
+    "iluminación cálida y elegante, tonos madera oscura y mármol, enfoque nítido y realista. " +
+    "Sin personas, sin electrodomésticos, sin texto ni logotipos, sin bordes ni márgenes. " +
     "Espacio despejado en el centro y a la derecha para colocar un producto. Escena: " + ambiente;
+  const negativo = "personas, gente, texto, letras, logotipo, marca de agua, calle, ciudad, exterior, " +
+    "edificio urbano, vista a la calle, autos, borroso, dibujo, caricatura, ilustración, collage, " +
+    "marco, bordes, distorsionado, electrodoméstico, refrigeradora, lavadora";
   const res = await env.AI.run("@cf/stabilityai/stable-diffusion-xl-base-1.0", {
-    prompt, width: 1344, height: 768
+    prompt, negative_prompt: negativo, width: 1344, height: 768
   });
   let bytes;
   if (res && typeof res.image === "string") {

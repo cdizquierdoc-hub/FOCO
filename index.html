@@ -247,8 +247,8 @@ const FICHA_DEMO = {
 };
 FICHA_DEMO.escenas = {
   portada: "cocina moderna de noche, con gabinetes de madera oscura, encimera de mármol y luz LED cálida bajo los gabinetes.",
-  beneficios_1_2: "cocina moderna luminosa con mostrador limpio y plantas junto a una ventana.",
-  beneficios_3_4: "cocina de madera clara con luz natural de día y repisas con frascos de alimentos."
+  beneficios_1_2: "cocina moderna de noche con encimera de mármol oscuro, grifo de bronce y estantes iluminados con plantas.",
+  beneficios_3_4: "cocina moderna con isla de madera oscura, luz LED cálida y repisas con frascos y utensilios de cocina."
 };
 FICHA_DEMO.datos_destacados = [null, null, null, { valor: "434 L", etiqueta: "Capacidad neta" }];
 const CARACTERISTICAS_DEMO = ["Panel digital exterior", "Tecnología Inverter", "Dispensador de agua", "Gran capacidad"];
@@ -530,33 +530,65 @@ function renderPortada(D) {
   return c;
 }
 
+/* Beneficios con la composición de la ficha de diseño:
+   fondo blanco, tarjetas contorneadas con círculo azul sobre el borde,
+   y a la derecha un panel en chevron con el ambiente tintado en azul y el producto. */
 function renderBeneficios(D, idx) {
   const c = nuevoLienzo(), ctx = c.getContext("2d");
   const esc = idx === 0 ? D.escenas.b1 : D.escenas.b2;
   const items = D.beneficios.slice(idx * 2, idx * 2 + 2);
-  drawCover(ctx, esc.img, 0, 0, W, H);
-  if (!esc.integrado) dibujarProducto(ctx, D.producto, 1480, 1000, 820);
+  ctx.fillStyle = BLANCO; ctx.fillRect(0, 0, W, H);
 
-  // Dos tarjetas azules apiladas a la izquierda, con icono, título y texto
-  const x = 90, w = 600, h = 400, ys = [140, 580];
+  // Panel en chevron (entrante por la izquierda) con el ambiente tintado en azul
+  const chevron = [[816, 0], [W, 0], [W, H], [816, H], [1123, 540]];
+  ctx.save();
+  poligono(ctx, chevron); ctx.clip();
+  drawCover(ctx, esc.img, 760, 0, W - 760, H);
+  ctx.globalCompositeOperation = "color";
+  ctx.fillStyle = "rgba(71,169,228,.92)"; ctx.fillRect(760, 0, W - 760, H);
+  ctx.globalCompositeOperation = "source-over";
+  ctx.fillStyle = "rgba(71,169,228,.25)"; ctx.fillRect(760, 0, W - 760, H);
+  ctx.restore();
+
+  if (!esc.integrado) dibujarProducto(ctx, D.producto, 1620, 1000, 700);
+
+  // Encabezado: modelo y subtítulo, como en la ficha de diseño
+  const encabezado = ajustarLinea(ctx, `REFRIGERADORA SMC ${D.modelo}`, 800, 680, 40, 24);
+  fuente(ctx, 800, encabezado); ctx.fillStyle = AZUL; ctx.textAlign = "left";
+  ctx.fillText(`REFRIGERADORA SMC ${D.modelo}`, 90, 110);
+  const subtitulo = ajustarLinea(ctx, D.subtitulo || "Tecnología, frescura y comodidad en un solo lugar.", 600, 680, 26, 18);
+  fuente(ctx, 600, subtitulo); ctx.fillText(D.subtitulo || "Tecnología, frescura y comodidad en un solo lugar.", 90, 150);
+  dibujarLineaCentrada(ctx, "BENEFICIOS:", 800, 28, 400, 262, AZUL, "center");
+
+  // Dos tarjetas contorneadas apiladas, con el círculo de icono sobre el borde superior
+  const x = 90, w = 640, h = 270, ys = [360, 720];
   items.forEach((b, i) => {
     const y = ys[i];
     ctx.save();
-    ctx.shadowColor = "rgba(0,0,0,.3)"; ctx.shadowBlur = 30; ctx.shadowOffsetY = 10;
-    ctx.fillStyle = "rgba(71,169,228,.94)";
-    rrect(ctx, x, y, w, h, 50); ctx.fill();
+    ctx.fillStyle = BLANCO; rrect(ctx, x, y, w, h, 46); ctx.fill();
+    ctx.lineWidth = 3; ctx.strokeStyle = AZUL; ctx.stroke();
     ctx.restore();
+
+    const cx = x + w / 2, r = 62;
+    ctx.fillStyle = AZUL; ctx.beginPath(); ctx.arc(cx, y, r, 0, Math.PI * 2); ctx.fill();
     const img = icono(claveIcono(b.titulo), BLANCO);
-    if (img) ctx.drawImage(img, x + 40, y + 36, 92, 92);
-    const tit = ajustarBloque(ctx, b.titulo, 800, w - 80, 80, 44, 28, 1.1);
-    const yT = y + 160;
-    const hT = dibujarBloque(ctx, tit, x + 40, yT, BLANCO);
-    const cuerpo = ajustarBloque(ctx, b.texto, 400, w - 80, h - (160 + hT + 60), 30, 22, 1.3);
-    dibujarBloque(ctx, cuerpo, x + 40, yT + hT + 24, BLANCO);
+    if (img) ctx.drawImage(img, cx - 44, y - 44, 88, 88);
+
+    const tit = ajustarBloque(ctx, b.titulo, 800, w - 110, 100, 40, 26, 1.1);
+    const hT = tit.lineas.length * tit.tam * tit.lh;
+    const yT = y + r + 30;
+    fuente(ctx, tit.peso, tit.tam); ctx.fillStyle = AZUL; ctx.textAlign = "center";
+    tit.lineas.forEach((l, k) => ctx.fillText(l, cx, yT + tit.tam * 0.95 + k * tit.tam * tit.lh));
+    ctx.textAlign = "left";
+    const cuerpo = ajustarBloque(ctx, b.texto, 400, w - 110, h - (r + 30 + hT + 40), 30, 20, 1.3);
+    const yC = yT + hT + 14;
+    fuente(ctx, cuerpo.peso, cuerpo.tam); ctx.fillStyle = AZUL; ctx.textAlign = "center";
+    cuerpo.lineas.forEach((l, k) => ctx.fillText(l, cx, yC + cuerpo.tam * 0.95 + k * cuerpo.tam * cuerpo.lh));
+    ctx.textAlign = "left";
   });
 
-  // Burbuja con cifra clave (si el spec sheet la trae)
-  const posiciones = [[1790, 240], [1790, 880]];
+  // Burbuja con la cifra clave (si el spec sheet la trae): el texto va dentro del círculo
+  const posiciones = [[1760, 250], [1760, 800]];
   items.forEach((b, i) => {
     const dato = D.datos[idx * 2 + i];
     if (!dato || !dato.valor) return;
@@ -566,10 +598,13 @@ function renderBeneficios(D, idx) {
     ctx.fillStyle = AZUL; ctx.beginPath(); ctx.arc(bx, by, 125, 0, Math.PI * 2); ctx.fill();
     ctx.restore();
     ctx.fillStyle = BLANCO; ctx.beginPath(); ctx.arc(bx, by, 103, 0, Math.PI * 2); ctx.fill();
-    const tv = ajustarLinea(ctx, dato.valor, 800, 170, 56, 30);
-    dibujarLineaCentrada(ctx, dato.valor, 800, tv, bx, by + 6, AZUL, "center");
-    const te = ajustarBloque(ctx, dato.etiqueta || "", 400, 170, 60, 24, 16, 1.1);
-    dibujarBloque(ctx, te, bx - 85, by + tv * 0.6 + 14, AZUL, "center");
+    const tv = ajustarLinea(ctx, dato.valor, 800, 150, 56, 30);
+    dibujarLineaCentrada(ctx, dato.valor, 800, tv, bx, by + 4, AZUL, "center");
+    const te = ajustarBloque(ctx, dato.etiqueta || "", 400, 150, 50, 22, 16, 1.1);
+    const yE = by + 26 + tv * 0.35;
+    fuente(ctx, te.peso, te.tam); ctx.fillStyle = AZUL; ctx.textAlign = "center";
+    te.lineas.forEach((l, k) => ctx.fillText(l, bx, yE + k * te.tam * te.lh));
+    ctx.textAlign = "left";
   });
   return c;
 }
