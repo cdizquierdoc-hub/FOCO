@@ -1,0 +1,778 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fichas comerciales SMC</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
+<style>
+  :root { --azul:#47A9E4; --marino:#263A76; --texto:#1d2a3a; --borde:#d9e3ec; --fondo:#f4f7fa; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: Montserrat, Arial, sans-serif; color:var(--texto); background:var(--fondo); }
+  header { background:var(--marino); color:#fff; padding:18px 28px; }
+  header h1 { margin:0; font-size:20px; font-weight:700; }
+  header p { margin:4px 0 0; font-size:13px; opacity:.85; }
+  main { max-width:1200px; margin:0 auto; padding:24px 16px 60px; display:grid; gap:20px; }
+  .panel { background:#fff; border:1px solid var(--borde); border-radius:14px; padding:20px; }
+  .panel h2 { font-size:16px; margin:0 0 12px; color:var(--marino); }
+  .grid-insumos { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  @media (max-width:760px){ .grid-insumos { grid-template-columns:1fr; } }
+  label.campo { display:block; font-size:13px; font-weight:600; margin-bottom:6px; }
+  input[type=text], input[type=url] { width:100%; padding:10px 12px; border:1px solid var(--borde); border-radius:8px; font:inherit; font-size:14px; }
+  input[type=file] { font-size:13px; }
+  .feats { display:grid; gap:10px; }
+  .miniatura { height:90px; border-radius:8px; border:1px solid var(--borde); object-fit:contain; background:#fff; margin-top:8px; }
+  .fila-botones { display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
+  button { font:inherit; font-weight:700; font-size:14px; border:0; border-radius:999px; padding:12px 22px; cursor:pointer; background:var(--azul); color:#fff; }
+  button.sec { background:#fff; color:var(--marino); border:2px solid var(--marino); }
+  button:disabled { background:#b9c6d2; cursor:not-allowed; border-color:#b9c6d2; }
+  button.sec:disabled { background:#fff; color:#9aa8b5; border-color:#c9d3dc; }
+  #log { font-size:13px; line-height:1.6; white-space:pre-line; color:#34495e; min-height:20px; }
+  #error { color:#b00020; font-size:13px; white-space:pre-line; }
+  .resultados { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:14px; }
+  .resultados figure { margin:0; background:#fff; border:1px solid var(--borde); border-radius:10px; padding:8px; }
+  .resultados canvas { width:100%; height:auto; display:block; border-radius:6px; cursor:pointer; }
+  .resultados figcaption { font-size:12px; color:#5b6b7b; margin-top:6px; }
+  small.ayuda { color:#5b6b7b; font-size:12px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Fichas comerciales SMC</h1>
+  <p>Sube el spec sheet y la foto del producto. Escribe las 4 características principales. Genera la ficha de 6 láminas.</p>
+</header>
+
+<main>
+  <section class="panel">
+    <h2>Configuración</h2>
+    <label class="campo" for="urlWorker">URL del intermediario (Cloudflare Worker)</label>
+    <input type="url" id="urlWorker" placeholder="https://fichas-smc.TU-USUARIO.workers.dev">
+    <small class="ayuda">Se guarda en este navegador. Sin esta URL la app no puede leer el spec sheet ni generar los ambientes con IA; sí puede usar el modo demo.</small>
+  </section>
+
+  <section class="panel">
+    <h2>1. Insumos</h2>
+    <div class="grid-insumos">
+      <div>
+        <label class="campo" for="spec">Spec sheet (PDF o imagen)</label>
+        <input type="file" id="spec" accept="application/pdf,image/png,image/jpeg">
+        <div id="specNombre" class="ayuda"></div>
+      </div>
+      <div>
+        <label class="campo" for="fotos">Foto del producto (la primera se usa)</label>
+        <input type="file" id="fotos" accept="image/png,image/jpeg,image/webp" multiple>
+        <img id="miniProducto" class="miniatura" alt="" hidden>
+        <small class="ayuda">PNG con fondo transparente o JPG con fondo blanco liso (se recorta automáticamente).</small>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>2. Las 4 características principales</h2>
+    <div class="feats">
+      <input type="text" id="f0" data-feat="0" placeholder="Característica 1 (ej. Panel digital exterior)">
+      <input type="text" id="f1" data-feat="1" placeholder="Característica 2 (ej. Tecnología Inverter)">
+      <input type="text" id="f2" data-feat="2" placeholder="Característica 3 (ej. Dispensador de agua)">
+      <input type="text" id="f3" data-feat="3" placeholder="Característica 4 (ej. Gran capacidad)">
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>3. Ambientes (opcional)</h2>
+    <p class="ayuda">Si no subes nada, la IA genera los ambientes. Si subes una foto, reemplaza el ambiente de esa lámina. Usa fotos de interiores sin electrodomésticos.</p>
+    <div class="grid-insumos">
+      <div><label class="campo" for="amb0">Portada</label><input type="file" id="amb0" data-amb="portada" accept="image/*"></div>
+      <div><label class="campo" for="amb1">Beneficios 1 y 2</label><input type="file" id="amb1" data-amb="b1" accept="image/*"></div>
+      <div><label class="campo" for="amb2">Beneficios 3 y 4</label><input type="file" id="amb2" data-amb="b2" accept="image/*"></div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>4. Generar</h2>
+    <div class="fila-botones">
+      <button id="bGen" disabled>Generar ficha</button>
+      <button id="bDemo" class="sec">Probar con datos demo</button>
+    </div>
+    <p id="log"></p>
+    <p id="error"></p>
+  </section>
+
+  <section class="panel" id="secResultados" hidden>
+    <h2>Resultado (6 láminas)</h2>
+    <div class="fila-botones" style="margin-bottom:14px">
+      <button id="bPdf">Descargar PDF</button>
+      <button id="bPptx" class="sec">Descargar PowerPoint</button>
+      <small class="ayuda">Haz clic en una lámina para descargarla como PNG.</small>
+    </div>
+    <div class="resultados" id="resultados"></div>
+  </section>
+</main>
+
+<script>
+/* ==========================================================================
+   Constantes de marca
+   ========================================================================== */
+const W = 1920, H = 1080;
+const AZUL = "#47A9E4", MARINO = "#263A76", BLANCO = "#FFFFFF";
+const FUENTE = "Montserrat, Arial, sans-serif";
+const NOMBRES_LAMINA = ["Portada", "Beneficios 1 y 2", "Beneficios 3 y 4", "Ficha para despachos", "Respaldo", "Cierre"];
+
+/* Datos de referencia (SMCRF14TMGO) para el modo demo */
+const FICHA_DEMO = {
+  modelo: "SMCRF14TMGO",
+  subtitulo_ficha: "Tecnología, frescura y comodidad en un solo lugar.",
+  portada: { titulo: "REFRIGERACIÓN SMC", texto: "La nueva SMCRF14TMGO combina diseño moderno, gran capacidad y funciones pensadas para hacer tu día a día más práctico." },
+  beneficios: [
+    { titulo: "Panel digital exterior", texto: "Mayor control y comodidad al alcance de tu mano." },
+    { titulo: "Tecnología Inverter", texto: "Eficiencia y rendimiento para todos los días." },
+    { titulo: "Dispensador de agua", texto: "Practicidad para disfrutar más tu hogar." },
+    { titulo: "Gran capacidad", texto: "Más espacio para organizar tus alimentos." }
+  ],
+  despacho: [
+    { etiqueta: "Marca", valor: "SMC", icono: "tag" },
+    { etiqueta: "Modelo", valor: "SMCRF14TMGO", icono: "modelo" },
+    { etiqueta: "Código de producto", valor: "22031020012162", icono: "qr" },
+    { etiqueta: "Tipo", valor: "Top Mount", icono: "tipo" },
+    { etiqueta: "Tecnología", valor: "Inverter", icono: "tech" },
+    { etiqueta: "Eficiencia energética", valor: "Clase A", icono: "energia" },
+    { etiqueta: "Capacidad neta", valor: "434 L", icono: "capacidad" },
+    { etiqueta: "Distribución de capacidad", valor: "Refrigerador: 302 L\nCongelador: 107 L", icono: "capacidad" },
+    { etiqueta: "Tamaño del producto", valor: "Alto: 172,3 cm\nAncho: 70 cm\nProfundidad: 69,1 cm", icono: "medidas" },
+    { etiqueta: "Peso neto / bruto", valor: "66,7 kg / 75 kg", icono: "peso" },
+    { etiqueta: "Tamaño de la caja", valor: "Alto: 177 cm\nAncho: 75,5 cm\nProfundidad: 71 cm", icono: "caja" },
+    { etiqueta: "Voltaje / frecuencia", valor: "115 V / 60 Hz", icono: "voltaje" },
+    { etiqueta: "Refrigerante", valor: "R600a / 58 g", icono: "refrigerante" },
+    { etiqueta: "Unidades por contenedor 40HQ", valor: "2 en tránsito\n3 en bodega", icono: "contenedor" },
+    { etiqueta: "Potencia", valor: "120 W", icono: "potencia" }
+  ]
+};
+FICHA_DEMO.escenas = {
+  portada: "cocina moderna de noche, con gabinetes de madera oscura, encimera de mármol y luz LED cálida bajo los gabinetes.",
+  beneficios_1_2: "cocina moderna luminosa con mostrador limpio y plantas junto a una ventana.",
+  beneficios_3_4: "cocina de madera clara con luz natural de día y repisas con frascos de alimentos."
+};
+FICHA_DEMO.datos_destacados = [null, null, null, { valor: "434 L", etiqueta: "Capacidad neta" }];
+const CARACTERISTICAS_DEMO = ["Panel digital exterior", "Tecnología Inverter", "Dispensador de agua", "Gran capacidad"];
+
+/* ==========================================================================
+   Iconos de línea (64×64, trazo redondeado)
+   ========================================================================== */
+const ICONOS = {
+  touch: '<rect x="18" y="8" width="28" height="48" rx="5"/><circle cx="32" cy="26" r="6"/><path d="M26 44h12"/>',
+  energy: '<path d="M36 6 18 36h14l-4 22 18-30H32z"/>',
+  inverter: '<rect x="20" y="18" width="24" height="28" rx="5"/><path d="M34 24l-5 9h6l-5 9"/><path d="M12 30v-6a16 16 0 0 1 16-16h8"/><path d="M52 34v6a16 16 0 0 1-16 16h-8"/>',
+  drop: '<path d="M32 8c10 14 18 24 18 34a18 18 0 0 1-36 0c0-10 8-20 18-34z"/><path d="M28 40a4 4 0 0 0 4 4"/>',
+  expand: '<path d="M8 8h14M8 8v14M56 8H42M56 8v14M8 56h14M8 56V42M56 56H42M56 56V42"/>',
+  snow: '<path d="M32 6v52M10 19l44 26M10 45l44-26"/><path d="M24 10l8 6 8-6M24 54l8-6 8 6"/>',
+  thermo: '<path d="M26 12a6 6 0 0 1 12 0v28a10 10 0 1 1-12 0z"/><path d="M32 26v18"/>',
+  volume: '<path d="M10 24h10l14-12v40L20 40H10z"/><path d="M44 24l12 16M56 24 44 40"/>',
+  tag: '<path d="M8 10h22l26 26-22 22L8 32z"/><circle cx="20" cy="22" r="3"/>',
+  box: '<path d="M32 8l22 12v24L32 56 10 44V20z"/><path d="M10 20l22 12 22-12M32 32v24"/>',
+  scale: '<path d="M12 22h40l4 34H8z"/><path d="M24 22a8 8 0 0 1 16 0"/>',
+  ruler: '<path d="M10 46 46 10l8 8-36 36z"/><path d="M22 34l6 6M30 26l6 6M38 18l6 6"/>',
+  plug: '<path d="M24 8v14M40 8v14M16 22h32v12a16 16 0 0 1-32 0z"/><path d="M32 50v6"/>',
+  wind: '<path d="M8 24h36a8 8 0 1 0-8-8M8 40h44a8 8 0 1 1-8 8M8 32h24"/>',
+  shield: '<path d="M32 6l22 8v16c0 14-10 24-22 28C20 54 10 44 10 30V14z"/><path d="M22 32l7 7 13-14"/>',
+  container: '<path d="M10 22l22-10 22 10v22L32 54 10 44z"/><path d="M10 22l22 10 22-10M32 32v22"/>',
+  tech: '<circle cx="32" cy="32" r="9"/><path d="M32 8v12M32 44v12M8 32h12M44 32h12M16 16l8 8M40 40l8 8M48 16l-8 8M24 40l-8 8"/>',
+  star: '<path d="M32 8l7 16 17 2-13 12 4 17-15-9-15 9 4-17L8 26l17-2z"/>'
+};
+const ICONO_DESPACHO = { tag:"tag", modelo:"tech", qr:"tech", tipo:"box", tech:"inverter", energia:"energy", capacidad:"expand", medidas:"ruler", peso:"scale", caja:"box", voltaje:"plug", refrigerante:"wind", contenedor:"container", potencia:"energy" };
+const REGLAS_ICONO = [
+  [/panel|digital|t[aá]ctil|control|pantalla/i, "touch"],
+  [/inverter|tecnolog/i, "inverter"],
+  [/agua|dispensad|hidrat/i, "drop"],
+  [/capacidad|espacio|gran|volumen|almacen|distribu/i, "expand"],
+  [/silencio|ruido|sonid/i, "volume"],
+  [/congela|fr[ií]o|enfri|nofrost|temperatura|fresc/i, "snow"],
+  [/energ|eficien|clase/i, "energy"],
+  [/garant|respaldo|seguridad|protec/i, "shield"],
+  [/peso|kg/i, "scale"],
+  [/medid|tama|alto|ancho|profund/i, "ruler"],
+  [/volt|frecuencia|hz/i, "plug"],
+  [/refrig|gas|r600/i, "wind"],
+  [/potencia|watt/i, "energy"],
+  [/contenedor|unidad|40hq/i, "container"],
+  [/caja/i, "box"],
+  [/marca|modelo|c[oó]digo/i, "tag"]
+];
+function claveIcono(texto) {
+  for (const [re, clave] of REGLAS_ICONO) if (re.test(texto || "")) return clave;
+  return "star";
+}
+const iconosListos = {};
+async function precargarIconos() {
+  const colores = [BLANCO, AZUL];
+  const tareas = [];
+  for (const clave of Object.keys(ICONOS)) {
+    for (const color of colores) {
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" stroke="${color}" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round">${ICONOS[clave]}</svg>`;
+      const img = new Image();
+      img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+      tareas.push(img.decode().catch(() => {}).then(() => { iconosListos[clave + "|" + color] = img; }));
+    }
+  }
+  await Promise.all(tareas);
+}
+function icono(clave, color) {
+  return iconosListos[clave + "|" + color] || iconosListos["star|" + color];
+}
+
+/* ==========================================================================
+   Utilidades de canvas y texto
+   ========================================================================== */
+function nuevoLienzo() {
+  const c = document.createElement("canvas");
+  c.width = W; c.height = H;
+  return c;
+}
+function fuente(ctx, peso, tam) { ctx.font = `${peso} ${tam}px ${FUENTE}`; }
+function drawCover(ctx, img, x, y, w, h) {
+  const s = Math.max(w / img.width, h / img.height);
+  const dw = img.width * s, dh = img.height * s;
+  ctx.drawImage(img, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
+}
+function rrect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+function poligono(ctx, pts) {
+  ctx.beginPath();
+  ctx.moveTo(pts[0][0], pts[0][1]);
+  for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]);
+  ctx.closePath();
+}
+function envolver(ctx, texto, maxW) {
+  const salida = [];
+  for (const parrafo of String(texto || "").split("\n")) {
+    const palabras = parrafo.split(/\s+/).filter(Boolean);
+    if (!palabras.length) { salida.push(""); continue; }
+    let linea = "";
+    for (const p of palabras) {
+      const prueba = linea ? linea + " " + p : p;
+      if (!linea || ctx.measureText(prueba).width <= maxW) linea = prueba;
+      else { salida.push(linea); linea = p; }
+    }
+    salida.push(linea);
+  }
+  return salida;
+}
+function ajustarLinea(ctx, texto, peso, maxW, max, min) {
+  for (let s = max; s >= min; s -= 2) {
+    fuente(ctx, peso, s);
+    if (ctx.measureText(texto).width <= maxW) return s;
+  }
+  return min;
+}
+function ajustarBloque(ctx, texto, peso, maxW, maxH, max, min, lh) {
+  for (let s = max; s >= min; s -= 2) {
+    fuente(ctx, peso, s);
+    const lineas = envolver(ctx, texto, maxW);
+    const cabe = lineas.every((l) => ctx.measureText(l).width <= maxW + 0.5);
+    if (cabe && lineas.length * s * lh <= maxH) return { tam: s, lineas, lh, peso };
+  }
+  fuente(ctx, peso, min);
+  return { tam: min, lineas: envolver(ctx, texto, maxW), lh, peso };
+}
+function dibujarBloque(ctx, bloque, x, y, color, alineacion) {
+  fuente(ctx, bloque.peso, bloque.tam);
+  ctx.fillStyle = color;
+  ctx.textAlign = alineacion || "left";
+  ctx.textBaseline = "alphabetic";
+  bloque.lineas.forEach((l, i) => ctx.fillText(l, x, y + bloque.tam * 0.95 + i * bloque.tam * bloque.lh));
+  ctx.textAlign = "left";
+  return bloque.lineas.length * bloque.tam * bloque.lh;
+}
+function dibujarLineaCentrada(ctx, texto, peso, tam, x, y, color, alineacion) {
+  fuente(ctx, peso, tam);
+  ctx.fillStyle = color;
+  ctx.textAlign = alineacion || "left";
+  ctx.textBaseline = "alphabetic";
+  ctx.fillText(texto, x, y);
+  ctx.textAlign = "left";
+}
+function cargarImagen(src) {
+  return new Promise((resolver, rechazar) => {
+    const img = new Image();
+    img.onload = () => resolver(img);
+    img.onerror = () => rechazar(new Error("No se pudo cargar " + src));
+    img.src = src;
+  });
+}
+function archivoAImagen(archivo) {
+  return new Promise((resolver, rechazar) => {
+    const url = URL.createObjectURL(archivo);
+    const img = new Image();
+    img.onload = () => resolver(img);
+    img.onerror = () => rechazar(new Error("Imagen no válida: " + archivo.name));
+    img.src = url;
+  });
+}
+function archivoABase64(archivo) {
+  return new Promise((resolver, rechazar) => {
+    const lector = new FileReader();
+    lector.onload = () => resolver(String(lector.result).split(",")[1]);
+    lector.onerror = () => rechazar(new Error("No se pudo leer " + archivo.name));
+    lector.readAsDataURL(archivo);
+  });
+}
+
+/* Recorte del producto: si ya tiene transparencia la usa; si no, quita el fondo liso desde los bordes */
+function recortarProducto(img) {
+  const w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
+  const c = document.createElement("canvas");
+  c.width = w; c.height = h;
+  const ctx = c.getContext("2d", { willReadFrequently: true });
+  ctx.drawImage(img, 0, 0, w, h);
+  const datos = ctx.getImageData(0, 0, w, h);
+  const d = datos.data;
+  let transparentes = 0;
+  for (let i = 3; i < d.length; i += 4 * 37) if (d[i] < 250) transparentes++;
+  if (transparentes > (w * h / 37) * 0.02) return c;
+
+  const r0 = d[0], g0 = d[1], b0 = d[2];
+  const esFondo = (p) => {
+    const i = p * 4;
+    return Math.abs(d[i] - r0) + Math.abs(d[i + 1] - g0) + Math.abs(d[i + 2] - b0) < 90;
+  };
+  const visto = new Uint8Array(w * h);
+  const pila = [];
+  for (let x = 0; x < w; x++) { pila.push(x, (h - 1) * w + x); }
+  for (let y = 0; y < h; y++) { pila.push(y * w, y * w + w - 1); }
+  while (pila.length) {
+    const p = pila.pop();
+    if (visto[p] || !esFondo(p)) continue;
+    visto[p] = 1;
+    d[p * 4 + 3] = 0;
+    const x = p % w, y = (p / w) | 0;
+    if (x > 0) pila.push(p - 1);
+    if (x < w - 1) pila.push(p + 1);
+    if (y > 0) pila.push(p - w);
+    if (y < h - 1) pila.push(p + w);
+  }
+  ctx.putImageData(datos, 0, 0);
+  return c;
+}
+
+/* Producto con sombra suave de piso */
+function dibujarProducto(ctx, producto, cx, base, alto) {
+  const w = producto.width * alto / producto.height;
+  ctx.save();
+  ctx.globalAlpha = 0.5;
+  ctx.filter = "blur(16px)";
+  ctx.fillStyle = "#000";
+  ctx.beginPath();
+  ctx.ellipse(cx, base + 4, w * 0.55, 18, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+  ctx.drawImage(producto, cx - w / 2, base - alto, w, alto);
+}
+
+/* ==========================================================================
+   Escenas de ambiente (sin producto): imagen de IA, subida manual o degradado de respaldo
+   ========================================================================== */
+function escenaRespaldo(tipo) {
+  const c = nuevoLienzo(), ctx = c.getContext("2d");
+  if (tipo === "portada") {
+    const g = ctx.createRadialGradient(1400, 300, 80, 1200, 500, 1300);
+    g.addColorStop(0, "#5a3d25"); g.addColorStop(0.5, "#241913"); g.addColorStop(1, "#0d0a08");
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  } else {
+    const g = ctx.createLinearGradient(0, 0, W, H);
+    g.addColorStop(0, "#dcecf8"); g.addColorStop(1, "#7fb8e0");
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    const v = ctx.createRadialGradient(W * 0.6, H * 0.4, 100, W * 0.6, H * 0.4, W * 0.8);
+    v.addColorStop(0, "rgba(255,255,255,.35)"); v.addColorStop(1, "rgba(38,58,118,.25)");
+    ctx.fillStyle = v; ctx.fillRect(0, 0, W, H);
+  }
+  return c;
+}
+/* ==========================================================================
+   Renderizado de las 6 láminas
+   ========================================================================== */
+function renderPortada(D) {
+  const c = nuevoLienzo(), ctx = c.getContext("2d");
+  drawCover(ctx, D.escenas.portada.img, 0, 0, W, H);
+  if (!D.escenas.portada.integrado) dibujarProducto(ctx, D.producto, 1480, 1010, 860);
+  const g = ctx.createLinearGradient(0, H, 0, H * 0.3);
+  g.addColorStop(0, "rgba(10,8,6,.85)"); g.addColorStop(1, "rgba(10,8,6,0)");
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+
+  // Pastilla azul con logo, pegada al borde izquierdo
+  const pw = 430, ph = 200, px = 0, py = 70;
+  ctx.fillStyle = AZUL;
+  ctx.beginPath();
+  ctx.moveTo(px, py); ctx.lineTo(px + pw - ph / 2, py);
+  ctx.arc(px + pw - ph / 2, py + ph / 2, ph / 2, -Math.PI / 2, Math.PI / 2);
+  ctx.lineTo(px, py + ph); ctx.closePath(); ctx.fill();
+  const lw = 290, lh = lw * D.logo.height / D.logo.width;
+  ctx.drawImage(D.logo, px + (pw - lw) / 2 - 20, py + (ph - lh) / 2, lw, lh);
+
+  // Título y descripción anclados abajo a la izquierda
+  const maxW = 1150;
+  const tamTitulo = Math.min(
+    ajustarLinea(ctx, D.modelo, 800, maxW, 150, 60),
+    ajustarLinea(ctx, D.portada.titulo, 800, maxW, 150, 60)
+  );
+  const desc = ajustarBloque(ctx, D.portada.texto, 400, 1150, 200, 44, 26, 1.3);
+  const altoDesc = desc.lineas.length * desc.tam * desc.lh;
+  const yDesc = H - 60 - altoDesc;
+  ctx.shadowColor = "rgba(0,0,0,.45)"; ctx.shadowBlur = 16;
+  dibujarBloque(ctx, desc, 110, yDesc, BLANCO);
+  const yTitulo2 = yDesc - 26;
+  dibujarLineaCentrada(ctx, D.portada.titulo, 800, tamTitulo, 110, yTitulo2, BLANCO);
+  dibujarLineaCentrada(ctx, D.modelo, 800, tamTitulo, 110, yTitulo2 - tamTitulo * 1.02, BLANCO);
+  ctx.shadowBlur = 0; ctx.shadowColor = "transparent";
+  return c;
+}
+
+function renderBeneficios(D, idx) {
+  const c = nuevoLienzo(), ctx = c.getContext("2d");
+  const esc = idx === 0 ? D.escenas.b1 : D.escenas.b2;
+  const items = D.beneficios.slice(idx * 2, idx * 2 + 2);
+  drawCover(ctx, esc.img, 0, 0, W, H);
+  if (!esc.integrado) dibujarProducto(ctx, D.producto, 1480, 1000, 820);
+
+  // Dos tarjetas azules apiladas a la izquierda, con icono, título y texto
+  const x = 90, w = 600, h = 400, ys = [140, 580];
+  items.forEach((b, i) => {
+    const y = ys[i];
+    ctx.save();
+    ctx.shadowColor = "rgba(0,0,0,.3)"; ctx.shadowBlur = 30; ctx.shadowOffsetY = 10;
+    ctx.fillStyle = "rgba(71,169,228,.94)";
+    rrect(ctx, x, y, w, h, 50); ctx.fill();
+    ctx.restore();
+    const img = icono(claveIcono(b.titulo), BLANCO);
+    if (img) ctx.drawImage(img, x + 40, y + 36, 92, 92);
+    const tit = ajustarBloque(ctx, b.titulo, 800, w - 80, 80, 44, 28, 1.1);
+    const yT = y + 160;
+    const hT = dibujarBloque(ctx, tit, x + 40, yT, BLANCO);
+    const cuerpo = ajustarBloque(ctx, b.texto, 400, w - 80, h - (160 + hT + 60), 30, 22, 1.3);
+    dibujarBloque(ctx, cuerpo, x + 40, yT + hT + 24, BLANCO);
+  });
+
+  // Burbuja con cifra clave (si el spec sheet la trae)
+  const posiciones = [[1790, 240], [1790, 880]];
+  items.forEach((b, i) => {
+    const dato = D.datos[idx * 2 + i];
+    if (!dato || !dato.valor) return;
+    const [bx, by] = posiciones[i];
+    ctx.save();
+    ctx.shadowColor = "rgba(0,0,0,.3)"; ctx.shadowBlur = 24;
+    ctx.fillStyle = AZUL; ctx.beginPath(); ctx.arc(bx, by, 125, 0, Math.PI * 2); ctx.fill();
+    ctx.restore();
+    ctx.fillStyle = BLANCO; ctx.beginPath(); ctx.arc(bx, by, 103, 0, Math.PI * 2); ctx.fill();
+    const tv = ajustarLinea(ctx, dato.valor, 800, 170, 56, 30);
+    dibujarLineaCentrada(ctx, dato.valor, 800, tv, bx, by + 6, AZUL, "center");
+    const te = ajustarBloque(ctx, dato.etiqueta || "", 400, 170, 60, 24, 16, 1.1);
+    dibujarBloque(ctx, te, bx - 85, by + tv * 0.6 + 14, AZUL, "center");
+  });
+  return c;
+}
+
+function renderDespacho(D) {
+  const c = nuevoLienzo(), ctx = c.getContext("2d");
+  ctx.fillStyle = BLANCO; ctx.fillRect(0, 0, W, H);
+  poligono(ctx, [[1250, 0], [W, 0], [W, H], [1450, H], [1130, 540]]);
+  ctx.fillStyle = AZUL; ctx.fill();
+
+  // Título: "Ficha para" regular + "PEDIDOS Y DESPACHOS" en negrita
+  const parte1 = "Ficha para ", parte2 = "PEDIDOS Y DESPACHOS";
+  let tam = 84;
+  for (; tam > 40; tam -= 2) {
+    fuente(ctx, 400, tam); const a = ctx.measureText(parte1).width;
+    fuente(ctx, 800, tam); const b = ctx.measureText(parte2).width;
+    if (a + b <= 1080) break;
+  }
+  fuente(ctx, 400, tam); ctx.fillStyle = AZUL; ctx.fillText(parte1, 90, 170);
+  const anchoA = ctx.measureText(parte1).width;
+  fuente(ctx, 800, tam); ctx.fillText(parte2, 90 + anchoA, 170);
+
+  // Cuadrícula de especificaciones: 3 columnas de 5 filas
+  const columnasX = [70, 420, 770], filaY0 = 290, altoFila = 150;
+  D.despacho.slice(0, 15).forEach((item, i) => {
+    const col = Math.floor(i / 5), fila = i % 5;
+    const x = columnasX[col], y = filaY0 + fila * altoFila;
+    const clave = ICONO_DESPACHO[item.icono] || claveIcono(item.etiqueta);
+    const img = icono(clave, AZUL);
+    if (img) ctx.drawImage(img, x, y + 2, 62, 62);
+    const etiqueta = ajustarBloque(ctx, item.etiqueta, 800, 240, 70, 28, 18, 1.12);
+    const altoE = etiqueta.lineas.length * etiqueta.tam * etiqueta.lh;
+    dibujarBloque(ctx, etiqueta, x + 84, y + 6, AZUL);
+    const valor = ajustarBloque(ctx, item.valor, 400, 240, 80, 24, 17, 1.2);
+    dibujarBloque(ctx, valor, x + 84, y + 6 + altoE + 4, AZUL);
+  });
+
+  dibujarProducto(ctx, D.producto, 1600, 1000, 860);
+
+  // Pastillas de garantía sobrepuestas a la refrigeradora
+  const pastillas = [
+    { x: 1160, y: 470, w: 740, h: 160, numero: "1 AÑO", texto: ["de garantía en todo el producto", "Repuestos + mano de obra."] },
+    { x: 1160, y: 760, w: 740, h: 160, numero: "10 AÑOS", texto: ["de garantía total", "en el compresor Inverter."] }
+  ];
+  pastillas.forEach((p) => {
+    const g = ctx.createLinearGradient(p.x, p.y, p.x + p.w, p.y);
+    g.addColorStop(0, MARINO); g.addColorStop(1, "#3F5FB8");
+    ctx.save();
+    ctx.shadowColor = "rgba(0,0,0,.25)"; ctx.shadowBlur = 24; ctx.shadowOffsetY = 8;
+    ctx.fillStyle = g; rrect(ctx, p.x, p.y, p.w, p.h, p.h / 2); ctx.fill();
+    ctx.restore();
+    let tamN = 80;
+    fuente(ctx, 800, tamN);
+    while (ctx.measureText(p.numero).width > p.w - 80 - 24 - 300 && tamN > 50) { tamN -= 2; fuente(ctx, 800, tamN); }
+    const anchoN = ctx.measureText(p.numero).width;
+    ctx.fillStyle = BLANCO; ctx.textBaseline = "middle"; ctx.textAlign = "left";
+    ctx.fillText(p.numero, p.x + 40, p.y + p.h / 2 + 2);
+    const xT = p.x + 40 + anchoN + 24;
+    const maxT = p.x + p.w - 36 - xT;
+    const texto = ajustarBloque(ctx, p.texto.join("\n"), 400, maxT, p.h - 44, 30, 18, 1.15);
+    const altoT = texto.lineas.length * texto.tam * texto.lh;
+    dibujarBloque(ctx, texto, xT, p.y + (p.h - altoT) / 2 - 2, BLANCO);
+    ctx.textBaseline = "alphabetic";
+  });
+  return c;
+}
+
+function renderFija(img) {
+  const c = nuevoLienzo(), ctx = c.getContext("2d");
+  ctx.drawImage(img, 0, 0, W, H);
+  return c;
+}
+
+/* ==========================================================================
+   Estado y flujo
+   ========================================================================== */
+const estado = { fotoBase64: null, fotoMedia: null, modelo: "", spec: null, specMedia: null, specEsDemo: false, fotos: [], producto: null, ambientes: {}, feats: ["", "", "", ""], demo: false, fijas: null, logo: null };
+const $ = (id) => document.getElementById(id);
+const URL_BASE = () => ($("urlWorker").value || "").trim().replace(/\/$/, "");
+const LAMINAS = [];
+
+function log(t) { $("log").textContent = t; }
+function error(t) { $("error").textContent = t || ""; }
+function validar() {
+  const listo = (estado.spec || estado.demo) && estado.producto && estado.feats.every((f) => f.trim());
+  $("bGen").disabled = !listo;
+}
+
+async function llamarWorker(ruta, cuerpo) {
+  const base = URL_BASE();
+  if (!base) throw new Error("Pega primero la URL del intermediario (Cloudflare Worker).");
+  const resp = await fetch(base + ruta, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(cuerpo) });
+  let datos = {};
+  try { datos = await resp.json(); } catch (e) { /* respuesta vacía */ }
+  if (!resp.ok) throw new Error(datos.error || `Error ${resp.status} del intermediario`);
+  return datos;
+}
+
+function promptIntegrado(ambiente, nombreProducto) {
+  return `Fotografía publicitaria realista de catálogo, horizontal 16:9. Escena: ${ambiente} ` +
+    `Coloca EXACTAMENTE el producto de la imagen de referencia (${nombreProducto}) dentro de la escena, de frente y bien integrado: ` +
+    `misma forma, mismo color, mismos paneles, logotipo y pantalla que la referencia, sin inventar detalles ni cambiar el diseño. ` +
+    `Iluminación y sombras coherentes con el ambiente y sombra natural sobre el piso. ` +
+    `Deja espacio libre a la izquierda para un bloque de texto. Sin personas, sin texto, sin logotipos adicionales ni marcas de agua.`;
+}
+
+async function obtenerAmbiente(tipo, ambienteDescripcion, nombreProducto) {
+  if (estado.ambientes[tipo]) return { img: estado.ambientes[tipo], integrado: false };
+  if (!URL_BASE()) return { img: escenaRespaldo(tipo), integrado: false };
+  try {
+    const cuerpo = { prompt: promptIntegrado(ambienteDescripcion, nombreProducto) };
+    if (estado.fotoBase64) { cuerpo.referencia_base64 = estado.fotoBase64; cuerpo.referencia_media = estado.fotoMedia; }
+    const { imagen_base64, media_type } = await llamarWorker("/api/imagen", cuerpo);
+    return { img: await cargarImagen(`data:${media_type};base64,${imagen_base64}`), integrado: true };
+  } catch (e) {
+    error((($("error").textContent) ? $("error").textContent + "\n" : "") + `Ambiente "${tipo}" con respaldo: ${e.message}`);
+    return { img: escenaRespaldo(tipo), integrado: false };
+  }
+}
+
+async function generar() {
+  error(""); $("bGen").disabled = true;
+  try {
+    let ficha;
+    if (estado.demo) {
+      ficha = JSON.parse(JSON.stringify(FICHA_DEMO));
+      log("Usando datos demo de SMCRF14TMGO.");
+    } else {
+      log("Leyendo el spec sheet con Claude...");
+      const { ficha: f } = await llamarWorker("/api/extraer", {
+        archivo_base64: estado.specBase64, media_type: estado.specMedia, caracteristicas: estado.feats.map((f) => f.trim())
+      });
+      ficha = f;
+    }
+    const nombre = ficha.modelo;
+    const esc = ficha.escenas || FICHA_DEMO.escenas;
+    log("Generando los ambientes con el producto integrado...");
+    const [portada, b1, b2] = await Promise.all([
+      obtenerAmbiente("portada", esc.portada, nombre),
+      obtenerAmbiente("b1", esc.beneficios_1_2, nombre),
+      obtenerAmbiente("b2", esc.beneficios_3_4, nombre)
+    ]);
+    log("Armando las 6 láminas...");
+    const D = {
+      modelo: nombre,
+      subtitulo: ficha.subtitulo_ficha || "",
+      portada: ficha.portada,
+      beneficios: estado.feats.map((f, i) => ({ titulo: f.trim(), texto: (ficha.beneficios && ficha.beneficios[i] && ficha.beneficios[i].texto) || "" })),
+      datos: ficha.datos_destacados || [],
+      despacho: ficha.despacho || [],
+      producto: estado.producto,
+      escenas: { portada, b1, b2 },
+      logo: estado.logo,
+      fijas: estado.fijas
+    };
+    estado.modelo = D.modelo;
+    LAMINAS.length = 0;
+    LAMINAS.push(
+      renderPortada(D),
+      renderBeneficios(D, 0),
+      renderBeneficios(D, 1),
+      renderDespacho(D),
+      renderFija(estado.fijas.respaldo),
+      renderFija(estado.fijas.cierre)
+    );
+    await document.fonts.ready;
+    mostrarResultados();
+    log("Listo. Revisa las 6 láminas y descarga el PDF o PowerPoint.");
+  } catch (e) {
+    error("Error: " + e.message);
+    log("");
+  } finally {
+    validar();
+  }
+}
+
+function mostrarResultados() {
+  const cont = $("resultados");
+  cont.innerHTML = "";
+  LAMINAS.forEach((c, i) => {
+    const fig = document.createElement("figure");
+    const cv = document.createElement("canvas");
+    cv.width = W; cv.height = H;
+    cv.getContext("2d").drawImage(c, 0, 0);
+    cv.title = "Clic para descargar PNG";
+    cv.onclick = () => cv.toBlob((b) => descargarBlob(b, `lamina_${i + 1}.png`));
+    const cap = document.createElement("figcaption");
+    cap.textContent = `${i + 1}. ${NOMBRES_LAMINA[i]}`;
+    fig.appendChild(cv); fig.appendChild(cap); cont.appendChild(fig);
+  });
+  $("secResultados").hidden = false;
+  $("secResultados").scrollIntoView({ behavior: "smooth" });
+}
+
+function descargarBlob(blob, nombre) {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob); a.download = nombre;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+
+function exportarPdf() {
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF({ orientation: "landscape", unit: "px", format: [W, H], hotfixes: ["px_scaling"] });
+  LAMINAS.forEach((c, i) => {
+    if (i > 0) pdf.addPage([W, H], "landscape");
+    pdf.addImage(c.toDataURL("image/jpeg", 0.93), "JPEG", 0, 0, W, H);
+  });
+  pdf.save(`Ficha_SMC_${estado.modelo || "producto"}.pdf`);
+}
+
+function exportarPptx() {
+  const pptx = new PptxGenJS();
+  pptx.defineLayout({ name: "FICHA", width: 13.333, height: 7.5 });
+  pptx.layout = "FICHA";
+  LAMINAS.forEach((c) => {
+    const s = pptx.addSlide();
+    s.addImage({ data: c.toDataURL("image/jpeg", 0.93), x: 0, y: 0, w: 13.333, h: 7.5 });
+  });
+  pptx.writeFile({ fileName: `Ficha_SMC.pptx` });
+}
+
+/* ==========================================================================
+   Eventos de la interfaz
+   ========================================================================== */
+async function iniciar() {
+  try {
+    await Promise.all([
+      document.fonts.load(`800 40px Montserrat`), document.fonts.load(`400 40px Montserrat`),
+      document.fonts.load(`600 40px Montserrat`), document.fonts.load(`700 40px Montserrat`)
+    ]);
+  } catch (e) { /* sin fuente: se usa la de respaldo */ }
+  estado.fijas = {
+    respaldo: await cargarImagen("assets/fijas/respaldo.jpg"),
+    cierre: await cargarImagen("assets/fijas/cierre.jpg")
+  };
+  estado.logo = await cargarImagen("assets/logo_smc_blanco.png");
+  await precargarIconos();
+  try { $("urlWorker").value = localStorage.getItem("smc_worker_url") || ""; } catch (e) { /* sin almacenamiento */ }
+}
+
+$("urlWorker").addEventListener("change", () => {
+  try { localStorage.setItem("smc_worker_url", URL_BASE()); } catch (e) { /* sin almacenamiento */ }
+});
+
+$("spec").addEventListener("change", async (e) => {
+  const f = e.target.files[0];
+  if (!f) return;
+  estado.spec = f; estado.demo = false;
+  estado.specMedia = f.type === "application/pdf" ? "application/pdf" : f.type;
+  $("specNombre").textContent = "Archivo: " + f.name;
+  try { estado.specBase64 = await archivoABase64(f); } catch (err) { error(err.message); }
+  validar();
+});
+
+$("fotos").addEventListener("change", async (e) => {
+  const f = e.target.files[0];
+  if (!f) return;
+  try {
+    estado.fotoBase64 = await archivoABase64(f);
+    estado.fotoMedia = f.type || "image/png";
+    const img = await archivoAImagen(f);
+    estado.producto = recortarProducto(img);
+    $("miniProducto").src = estado.producto.toDataURL("image/png");
+    $("miniProducto").hidden = false;
+  } catch (err) { error(err.message); }
+  validar();
+});
+
+document.querySelectorAll("[data-feat]").forEach((el) => {
+  el.addEventListener("input", () => { estado.feats[+el.dataset.feat] = el.value; validar(); });
+});
+
+document.querySelectorAll("[data-amb]").forEach((el) => {
+  el.addEventListener("change", async () => {
+    const f = el.files[0];
+    if (!f) { delete estado.ambientes[el.dataset.amb]; return; }
+    try { estado.ambientes[el.dataset.amb] = await archivoAImagen(f); } catch (err) { error(err.message); }
+  });
+});
+
+$("bGen").addEventListener("click", generar);
+
+$("bDemo").addEventListener("click", async () => {
+  error("");
+  estado.demo = true;
+  estado.producto = await cargarImagen("assets/demo/producto_smcrf14tmgo.png").then((img) => recortarProducto(img));
+  $("miniProducto").src = estado.producto.toDataURL("image/png");
+  $("miniProducto").hidden = false;
+  CARACTERISTICAS_DEMO.forEach((t, i) => { $("f" + i).value = t; estado.feats[i] = t; });
+  validar();
+  generar();
+});
+
+$("bPdf").addEventListener("click", exportarPdf);
+$("bPptx").addEventListener("click", exportarPptx);
+
+iniciar().then(validar).catch((e) => error("No se pudieron cargar los recursos: " + e.message));
+</script>
+</body>
+</html>

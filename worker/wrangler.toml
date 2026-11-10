@@ -1,0 +1,8 @@
+name = "smc-fichas-api"
+main = "worker.js"
+compatibility_date = "2026-01-01"
+
+# Modelo de imagen (cámbialo aquí si Google renombra el modelo)
+[vars]
+IMAGE_MODEL = "gemini-2.5-flash-image"
+TEXT_MODEL = "claude-sonnet-5-5"
