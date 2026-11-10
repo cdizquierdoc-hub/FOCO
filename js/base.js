@@ -270,7 +270,7 @@ function productoEl(i, h, cx, base) {
 /* Panel en chevron (mitad derecha de la lámina) con el ambiente tintado en azul */
 const CHEVRON_DER = [[0.0483, 0], [1, 0], [1, 1], [0.0483, 1], [0.3129, 0.5]];
 function panelChevron(img) {
-  return imagenEl(img, { x: 760, y: 0, w: 1160, h: H, pts: CHEVRON_DER, tinte: true, fondo: true });
+  return imagenEl(img, { x: 760, y: 0, w: 1160, h: H, pts: CHEVRON_DER, tinte: false, fondo: true });
 }
 
 function mapPts(e, pts) { return pts.map(([u, v]) => [e.x + u * e.w, e.y + v * e.h]); }

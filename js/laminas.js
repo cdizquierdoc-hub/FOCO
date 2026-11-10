@@ -4,9 +4,9 @@
 
 /* Ambiente fijo de cocina para refrigeradoras (la IA no siempre respeta la categoría) */
 const COCINAS = [
-  "interior de cocina moderna de noche, encimera de mármol oscuro, gabinetes de madera oscura y luz LED cálida bajo los gabinetes",
-  "interior de cocina moderna de noche con encimera de mármol oscuro, grifo de bronce y estantes iluminados con plantas",
-  "interior de cocina moderna con isla de madera oscura, luz LED cálida y repisas con frascos y utensilios de cocina"
+  "cocina residencial con fregadero, estufa y gabinetes de cocina, no es un baño; interior de cocina moderna de noche, encimera de mármol oscuro, gabinetes de madera oscura y luz LED cálida bajo los gabinetes",
+  "cocina residencial con fregadero, estufa y gabinetes de cocina, no es un baño; interior de cocina moderna de noche con encimera de mármol oscuro, grifo de bronce y estantes iluminados con plantas",
+  "cocina residencial con fregadero, estufa y gabinetes de cocina, no es un baño; interior de cocina moderna con isla de madera oscura, luz LED cálida y repisas con frascos y utensilios de cocina"
 ];
 const LAVANDERIAS = [
   "interior de lavandería moderna, gabinetes claros, piso de cerámica y luz cálida",
@@ -166,9 +166,9 @@ function construirLaminas(D) {
   const f = (i) => i % n;
   return [
     laminaPortada(D, f(0)),
+    laminaCuatro(D, f(0)),
     laminaBeneficios(D, 0, f(0)),
     laminaBeneficios(D, 1, f(1)),
-    laminaCuatro(D, f(0)),
     laminaDespacho(D, f(0)),
     laminaFija(5, estado.fijas.respaldo),
     laminaFija(6, estado.fijas.cierre)
