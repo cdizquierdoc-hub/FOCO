@@ -10,106 +10,210 @@
 <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js"></script>
 <style>
-  :root { --azul:#47A9E4; --marino:#263A76; --texto:#1d2a3a; --borde:#d9e3ec; --fondo:#f4f7fa; }
-  * { box-sizing: border-box; }
-  body { margin:0; font-family: Montserrat, Arial, sans-serif; color:var(--texto); background:var(--fondo); }
-  header { background:var(--marino); color:#fff; padding:18px 28px; }
-  header h1 { margin:0; font-size:20px; font-weight:700; }
-  header p { margin:4px 0 0; font-size:13px; opacity:.85; }
-  main { max-width:1200px; margin:0 auto; padding:24px 16px 60px; display:grid; gap:20px; }
-  .panel { background:#fff; border:1px solid var(--borde); border-radius:14px; padding:20px; }
-  .panel h2 { font-size:16px; margin:0 0 12px; color:var(--marino); }
-  .grid-insumos { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
-  @media (max-width:760px){ .grid-insumos { grid-template-columns:1fr; } }
-  label.campo { display:block; font-size:13px; font-weight:600; margin-bottom:6px; }
-  input[type=text], input[type=url] { width:100%; padding:10px 12px; border:1px solid var(--borde); border-radius:8px; font:inherit; font-size:14px; }
-  input[type=file] { font-size:13px; }
-  .feats { display:grid; gap:10px; }
-  .miniatura { height:90px; border-radius:8px; border:1px solid var(--borde); object-fit:contain; background:#fff; margin-top:8px; }
-  .fila-botones { display:flex; flex-wrap:wrap; gap:10px; align-items:center; }
-  button { font:inherit; font-weight:700; font-size:14px; border:0; border-radius:999px; padding:12px 22px; cursor:pointer; background:var(--azul); color:#fff; }
-  button.sec { background:#fff; color:var(--marino); border:2px solid var(--marino); }
-  button:disabled { background:#b9c6d2; cursor:not-allowed; border-color:#b9c6d2; }
-  button.sec:disabled { background:#fff; color:#9aa8b5; border-color:#c9d3dc; }
-  #log { font-size:13px; line-height:1.6; white-space:pre-line; color:#34495e; min-height:20px; }
-  #error { color:#b00020; font-size:13px; white-space:pre-line; }
-  .resultados { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:14px; }
-  .resultados figure { margin:0; background:#fff; border:1px solid var(--borde); border-radius:10px; padding:8px; }
-  .resultados canvas { width:100%; height:auto; display:block; border-radius:6px; cursor:pointer; }
-  .resultados figcaption { font-size:12px; color:#5b6b7b; margin-top:6px; }
-  small.ayuda { color:#5b6b7b; font-size:12px; }
+  :root { --azul:#47A9E4; --azul2:#2b8fd0; --azul-claro:#f1f8fd; --marino:#263A76; --navy:#17264F; --texto:#1c2b3a; --gris:#6b7a8c; --borde:#e2eaf2; --fondo:#f3f7fb; --ok:#1f9d6b; --err:#c93737; }
+  * { box-sizing:border-box; }
+  html, body { margin:0; }
+  body { font-family:Montserrat, Arial, sans-serif; color:var(--texto); background:var(--fondo); -webkit-font-smoothing:antialiased; }
+
+  /* Encabezado con borde en flecha */
+  .hero { background:linear-gradient(135deg, var(--navy) 0%, var(--marino) 60%, #2f5fb0 100%); color:#fff; padding:36px 24px 96px; clip-path:polygon(0 0, 100% 0, 100% 86%, 50% 100%, 0 86%); }
+  .hero-in { max-width:1080px; margin:0 auto; display:flex; align-items:center; gap:24px; flex-wrap:wrap; }
+  .pill-logo { background:var(--azul); border-radius:999px; padding:12px 28px; display:flex; align-items:center; flex:none; }
+  .pill-logo img { height:46px; display:block; }
+  .hero h1 { margin:0; font-size:30px; font-weight:800; letter-spacing:.5px; }
+  .hero p { margin:6px 0 0; opacity:.88; font-size:15px; line-height:1.5; max-width:620px; }
+
+  main { max-width:1080px; margin:-62px auto 64px; padding:0 16px; display:grid; gap:18px; position:relative; }
+
+  /* Pasos en forma de chevron */
+  .pasos { display:grid; grid-template-columns:repeat(4,1fr); gap:4px; }
+  .paso { background:#fff; color:var(--gris); font-size:13px; font-weight:700; padding:15px 14px; text-align:center; clip-path:polygon(0 0, calc(100% - 18px) 0, 100% 50%, calc(100% - 18px) 100%, 0 100%, 18px 50%); box-shadow:0 4px 14px rgba(23,38,79,.08); transition:.25s; }
+  .paso.on { background:var(--azul); color:#fff; }
+  .paso.ok { background:#e2f5ec; color:var(--ok); }
+
+  .card { background:#fff; border:1px solid var(--borde); border-radius:22px; padding:26px; box-shadow:0 8px 28px rgba(23,38,79,.06); }
+  .card-h { display:flex; align-items:center; gap:14px; margin-bottom:18px; }
+  .num { width:38px; height:38px; border-radius:50%; background:var(--azul); color:#fff; display:grid; place-items:center; font-weight:800; font-size:15px; flex:none; }
+  .card-h h2 { font-size:18px; margin:0; color:var(--marino); }
+  .card-h small { display:block; color:var(--gris); font-size:13px; margin-top:3px; line-height:1.4; }
+
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+  .grid3 { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+  @media (max-width:760px) { .grid2, .grid3 { grid-template-columns:1fr; } .pasos { grid-template-columns:1fr 1fr; row-gap:8px; } .hero h1 { font-size:24px; } .card { padding:20px; } }
+
+  /* Zonas de arrastrar y soltar */
+  .dz { position:relative; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; text-align:center; border:2px dashed #b9d9ef; border-radius:18px; background:var(--azul-claro); padding:24px 16px; min-height:170px; cursor:pointer; transition:.2s; }
+  .dz:hover, .dz.over { border-color:var(--azul); background:#e5f3fc; }
+  .dz input[type=file] { position:absolute; inset:0; opacity:0; width:100%; height:100%; cursor:pointer; }
+  .dz .ico { width:54px; height:54px; border-radius:50%; background:var(--azul); display:grid; place-items:center; }
+  .dz .ico svg { width:26px; height:26px; stroke:#fff; fill:none; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round; }
+  .dz strong { font-size:14px; color:var(--marino); }
+  .dz .dz-nombre { font-size:12px; color:var(--gris); word-break:break-word; }
+  .dz.listo { border-style:solid; border-color:var(--ok); background:#eefaf4; }
+  .dz.listo .ico { background:var(--ok); }
+  .dz img.mini { max-height:96px; max-width:100%; border-radius:10px; background:#fff; object-fit:contain; margin-top:4px; }
+
+  /* Características */
+  .feat { display:flex; align-items:center; gap:14px; margin-bottom:12px; }
+  .feat .num { width:42px; height:42px; }
+  .feat input { flex:1; padding:15px 18px; border:1.5px solid var(--borde); border-radius:14px; font:inherit; font-size:15px; background:#fbfdff; transition:.2s; min-width:0; }
+  .feat input:focus { outline:none; border-color:var(--azul); box-shadow:0 0 0 4px rgba(71,169,228,.18); background:#fff; }
+  .feat input::placeholder { color:#a6b3c1; }
+
+  .campo-url { width:100%; padding:14px 18px; border:1.5px solid var(--borde); border-radius:14px; font:inherit; font-size:14px; background:#fbfdff; }
+  .campo-url:focus { outline:none; border-color:var(--azul); box-shadow:0 0 0 4px rgba(71,169,228,.18); background:#fff; }
+  .etiqueta-amb { font-size:13px; font-weight:700; color:var(--marino); margin:0 0 8px; }
+
+  /* Botones */
+  .acciones { display:flex; flex-wrap:wrap; gap:12px; align-items:center; }
+  .btn { display:inline-flex; align-items:center; justify-content:center; gap:10px; border:0; border-radius:999px; padding:15px 28px; font:inherit; font-weight:800; font-size:15px; cursor:pointer; background:var(--azul); color:#fff; box-shadow:0 10px 20px rgba(71,169,228,.30); transition:.2s; text-decoration:none; }
+  .btn:hover:not(:disabled) { background:var(--azul2); transform:translateY(-1px); }
+  .btn svg { width:18px; height:18px; stroke:currentColor; fill:none; stroke-width:2.4; stroke-linecap:round; stroke-linejoin:round; }
+  .btn.sec { background:#fff; color:var(--marino); box-shadow:none; border:2px solid var(--marino); }
+  .btn.sec:hover:not(:disabled) { background:var(--marino); color:#fff; }
+  .btn.flecha { border-radius:0; padding:16px 44px 16px 30px; clip-path:polygon(0 0, calc(100% - 22px) 0, 100% 50%, calc(100% - 22px) 100%, 0 100%); box-shadow:none; filter:drop-shadow(0 8px 12px rgba(71,169,228,.30)); }
+  .btn:disabled { background:#d3dde7; color:#fff; box-shadow:none; cursor:not-allowed; transform:none; }
+  .btn.sec:disabled { background:#fff; color:#a4b1bf; border-color:#d5dde6; }
+  .ayuda { color:var(--gris); font-size:12.5px; line-height:1.5; margin:12px 0 0; }
+
+  .barra { height:8px; background:#e4edf6; border-radius:99px; overflow:hidden; margin-top:18px; display:none; }
+  .barra.on { display:block; }
+  .barra::after { content:""; display:block; height:100%; width:35%; border-radius:99px; background:linear-gradient(90deg, var(--azul), var(--marino)); animation:mueve 1.3s ease-in-out infinite; }
+  @keyframes mueve { 0% { transform:translateX(-100%); } 100% { transform:translateX(290%); } }
+  .estado { font-size:14px; color:var(--marino); line-height:1.6; white-space:pre-line; margin:14px 0 0; }
+  .estado:empty { display:none; }
+  .alerta { background:#fdecec; color:var(--err); border-radius:14px; padding:14px 16px; font-size:13px; line-height:1.5; white-space:pre-line; margin-top:14px; }
+  .alerta:empty { display:none; }
+
+  .resultados { display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:18px; margin-top:18px; }
+  .resultados figure { margin:0; background:#fff; border:1px solid var(--borde); border-radius:18px; padding:10px; box-shadow:0 6px 18px rgba(23,38,79,.06); }
+  .resultados canvas { width:100%; height:auto; display:block; border-radius:12px; cursor:pointer; transition:.2s; }
+  .resultados canvas:hover { opacity:.92; }
+  .resultados figcaption { font-size:13px; font-weight:700; color:var(--marino); margin:10px 4px 2px; }
+  .pie { text-align:center; font-size:12px; color:var(--gris); margin-top:6px; }
 </style>
 </head>
 <body>
-<header>
-  <h1>Fichas comerciales SMC</h1>
-  <p>Sube el spec sheet y la foto del producto. Escribe las 4 características principales. Genera la ficha de 6 láminas.</p>
+<header class="hero">
+  <div class="hero-in">
+    <div class="pill-logo"><img src="assets/logo_smc_blanco.png" alt="SMC"></div>
+    <div>
+      <h1>FICHAMBA</h1>
+      <p>Fichas comerciales SMC en 6 láminas. Sube el spec sheet y la foto del producto, escribe las 4 características y genera la ficha.</p>
+    </div>
+  </div>
 </header>
 
 <main>
-  <section class="panel">
-    <h2>Configuración</h2>
-    <label class="campo" for="urlWorker">URL del intermediario (Cloudflare Worker)</label>
-    <input type="url" id="urlWorker" placeholder="https://fichas-smc.TU-USUARIO.workers.dev">
-    <small class="ayuda">Se guarda en este navegador. Sin esta URL la app no puede leer el spec sheet ni generar los ambientes con IA; sí puede usar el modo demo.</small>
+  <nav class="pasos" aria-label="Pasos">
+    <div class="paso on" id="p1">1 · Insumos</div>
+    <div class="paso" id="p2">2 · Características</div>
+    <div class="paso" id="p3">3 · Ambientes</div>
+    <div class="paso" id="p4">4 · Generar</div>
+  </nav>
+
+  <section class="card">
+    <div class="card-h">
+      <div class="num">⚙</div>
+      <div>
+        <h2>Conexión</h2>
+        <small>Pega la URL de tu Worker una sola vez. Este navegador la recuerda.</small>
+      </div>
+    </div>
+    <input type="url" id="urlWorker" class="campo-url" placeholder="https://fichamba-api.TU-CUENTA.workers.dev">
   </section>
 
-  <section class="panel">
-    <h2>1. Insumos</h2>
-    <div class="grid-insumos">
+  <section class="card">
+    <div class="card-h">
+      <div class="num">1</div>
       <div>
-        <label class="campo" for="spec">Spec sheet (PDF o imagen)</label>
+        <h2>Spec sheet y foto del producto</h2>
+        <small>El spec sheet alimenta los datos. La foto se usa como referencia para la IA.</small>
+      </div>
+    </div>
+    <div class="grid2">
+      <label class="dz" id="dzSpec">
+        <div class="ico"><svg viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"/></svg></div>
+        <strong>Spec sheet</strong>
+        <span class="dz-nombre" data-def="PDF o imagen. Arrastra aquí o toca para elegir.">PDF o imagen. Arrastra aquí o toca para elegir.</span>
         <input type="file" id="spec" accept="application/pdf,image/png,image/jpeg">
-        <div id="specNombre" class="ayuda"></div>
-      </div>
-      <div>
-        <label class="campo" for="fotos">Foto del producto (la primera se usa)</label>
+      </label>
+      <label class="dz" id="dzFotos">
+        <div class="ico"><svg viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"/></svg></div>
+        <strong>Foto del producto</strong>
+        <span class="dz-nombre" data-def="PNG con fondo transparente o JPG. Se usa la primera.">PNG con fondo transparente o JPG. Se usa la primera.</span>
+        <img id="miniProducto" class="mini" alt="" hidden>
         <input type="file" id="fotos" accept="image/png,image/jpeg,image/webp" multiple>
-        <img id="miniProducto" class="miniatura" alt="" hidden>
-        <small class="ayuda">PNG con fondo transparente o JPG con fondo blanco liso (se recorta automáticamente).</small>
+      </label>
+    </div>
+    <span id="specNombre" hidden></span>
+  </section>
+
+  <section class="card">
+    <div class="card-h">
+      <div class="num">2</div>
+      <div>
+        <h2>Las 4 características principales</h2>
+        <small>Escríbelas en el orden en que quieres verlas en las láminas.</small>
       </div>
     </div>
+    <div class="feat"><div class="num">1</div><input type="text" id="f0" data-feat="0" placeholder="Ej. Panel digital exterior"></div>
+    <div class="feat"><div class="num">2</div><input type="text" id="f1" data-feat="1" placeholder="Ej. Tecnología Inverter"></div>
+    <div class="feat"><div class="num">3</div><input type="text" id="f2" data-feat="2" placeholder="Ej. Dispensador de agua"></div>
+    <div class="feat"><div class="num">4</div><input type="text" id="f3" data-feat="3" placeholder="Ej. Gran capacidad"></div>
   </section>
 
-  <section class="panel">
-    <h2>2. Las 4 características principales</h2>
-    <div class="feats">
-      <input type="text" id="f0" data-feat="0" placeholder="Característica 1 (ej. Panel digital exterior)">
-      <input type="text" id="f1" data-feat="1" placeholder="Característica 2 (ej. Tecnología Inverter)">
-      <input type="text" id="f2" data-feat="2" placeholder="Característica 3 (ej. Dispensador de agua)">
-      <input type="text" id="f3" data-feat="3" placeholder="Característica 4 (ej. Gran capacidad)">
+  <section class="card">
+    <div class="card-h">
+      <div class="num">3</div>
+      <div>
+        <h2>Ambientes <span style="font-weight:600;color:var(--gris);font-size:14px">(opcional)</span></h2>
+        <small>Si no subes nada, la IA crea el ambiente con el producto integrado. Si subes una foto, reemplaza ese ambiente.</small>
+      </div>
+    </div>
+    <div class="grid3">
+      <div><p class="etiqueta-amb">Portada</p>
+        <label class="dz"><div class="ico"><svg viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"/></svg></div><span class="dz-nombre" data-def="Opcional">Opcional</span><input type="file" id="amb0" data-amb="portada" accept="image/*"></label></div>
+      <div><p class="etiqueta-amb">Beneficios 1 y 2</p>
+        <label class="dz"><div class="ico"><svg viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"/></svg></div><span class="dz-nombre" data-def="Opcional">Opcional</span><input type="file" id="amb1" data-amb="b1" accept="image/*"></label></div>
+      <div><p class="etiqueta-amb">Beneficios 3 y 4</p>
+        <label class="dz"><div class="ico"><svg viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"/></svg></div><span class="dz-nombre" data-def="Opcional">Opcional</span><input type="file" id="amb2" data-amb="b2" accept="image/*"></label></div>
     </div>
   </section>
 
-  <section class="panel">
-    <h2>3. Ambientes (opcional)</h2>
-    <p class="ayuda">Si no subes nada, la IA genera los ambientes. Si subes una foto, reemplaza el ambiente de esa lámina. Usa fotos de interiores sin electrodomésticos.</p>
-    <div class="grid-insumos">
-      <div><label class="campo" for="amb0">Portada</label><input type="file" id="amb0" data-amb="portada" accept="image/*"></div>
-      <div><label class="campo" for="amb1">Beneficios 1 y 2</label><input type="file" id="amb1" data-amb="b1" accept="image/*"></div>
-      <div><label class="campo" for="amb2">Beneficios 3 y 4</label><input type="file" id="amb2" data-amb="b2" accept="image/*"></div>
+  <section class="card">
+    <div class="card-h">
+      <div class="num">4</div>
+      <div>
+        <h2>Generar la ficha</h2>
+        <small>Se activa cuando tengas spec sheet, foto y las 4 características.</small>
+      </div>
     </div>
+    <div class="acciones">
+      <button id="bGen" class="btn flecha" disabled>Generar ficha <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+      <button id="bDemo" class="btn sec">Probar con datos demo</button>
+    </div>
+    <div class="barra" id="barra"></div>
+    <p id="log" class="estado"></p>
+    <div id="error" class="alerta"></div>
   </section>
 
-  <section class="panel">
-    <h2>4. Generar</h2>
-    <div class="fila-botones">
-      <button id="bGen" disabled>Generar ficha</button>
-      <button id="bDemo" class="sec">Probar con datos demo</button>
+  <section class="card" id="secResultados" hidden>
+    <div class="card-h">
+      <div class="num">✓</div>
+      <div>
+        <h2>Tu ficha (6 láminas)</h2>
+        <small>Haz clic en una lámina para bajarla como PNG.</small>
+      </div>
     </div>
-    <p id="log"></p>
-    <p id="error"></p>
-  </section>
-
-  <section class="panel" id="secResultados" hidden>
-    <h2>Resultado (6 láminas)</h2>
-    <div class="fila-botones" style="margin-bottom:14px">
-      <button id="bPdf">Descargar PDF</button>
-      <button id="bPptx" class="sec">Descargar PowerPoint</button>
-      <small class="ayuda">Haz clic en una lámina para descargarla como PNG.</small>
+    <div class="acciones">
+      <button id="bPdf" class="btn">Descargar PDF</button>
+      <button id="bPptx" class="btn sec">Descargar PowerPoint</button>
     </div>
     <div class="resultados" id="resultados"></div>
   </section>
+
+  <p class="pie">FICHAMBA · Cresa Retail · Marcas Propias</p>
 </main>
 
 <script>
@@ -559,9 +663,25 @@ const LAMINAS = [];
 function log(t) { $("log").textContent = t; }
 function error(t) { $("error").textContent = t || ""; }
 function validar() {
-  const listo = (estado.spec || estado.demo) && estado.producto && estado.feats.every((f) => f.trim());
-  $("bGen").disabled = !listo;
+  const insumos = !!((estado.spec || estado.demo) && estado.producto);
+  const feats = estado.feats.every((f) => f.trim());
+  $("bGen").disabled = !(insumos && feats);
+  $("p1").className = "paso " + (insumos ? "ok" : "on");
+  $("p2").className = "paso " + (feats ? "ok" : insumos ? "on" : "");
+  $("p3").className = "paso " + (feats ? "on" : "");
+  $("p4").className = "paso " + (insumos && feats ? "on" : "");
 }
+document.querySelectorAll(".dz input[type=file]").forEach((inp) => {
+  const zona = inp.closest(".dz");
+  inp.addEventListener("change", () => {
+    const n = inp.files.length;
+    zona.classList.toggle("listo", n > 0);
+    const t = zona.querySelector(".dz-nombre");
+    if (t) t.textContent = n ? (n > 1 ? n + " archivos seleccionados" : inp.files[0].name) : t.dataset.def;
+  });
+  ["dragenter", "dragover"].forEach((ev) => zona.addEventListener(ev, (e) => { e.preventDefault(); zona.classList.add("over"); }));
+  ["dragleave", "drop"].forEach((ev) => zona.addEventListener(ev, () => zona.classList.remove("over")));
+});
 
 async function llamarWorker(ruta, cuerpo) {
   const base = URL_BASE();
@@ -596,7 +716,7 @@ async function obtenerAmbiente(tipo, ambienteDescripcion, nombreProducto) {
 }
 
 async function generar() {
-  error(""); $("bGen").disabled = true;
+  error(""); $("bGen").disabled = true; $("barra").classList.add("on");
   try {
     let ficha;
     if (estado.demo) {
@@ -647,6 +767,7 @@ async function generar() {
     error("Error: " + e.message);
     log("");
   } finally {
+    $("barra").classList.remove("on");
     validar();
   }
 }
