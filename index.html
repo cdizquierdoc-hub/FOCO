@@ -112,16 +112,7 @@
     <div class="paso" id="p4">4 · Generar</div>
   </nav>
 
-  <section class="card">
-    <div class="card-h">
-      <div class="num">⚙</div>
-      <div>
-        <h2>Conexión</h2>
-        <small>Pega la URL de tu Worker una sola vez. Este navegador la recuerda.</small>
-      </div>
-    </div>
-    <input type="url" id="urlWorker" class="campo-url" placeholder="https://fichamba-api.TU-CUENTA.workers.dev">
-  </section>
+  <input type="hidden" id="urlWorker" value="https://fichamba-api.cdizquierdoc.workers.dev">
 
   <section class="card">
     <div class="card-h">
@@ -694,7 +685,7 @@ async function llamarWorker(ruta, cuerpo) {
 }
 
 function promptIntegrado(ambiente, nombreProducto) {
-  return `Fotografía publicitaria realista de catálogo, horizontal 16:9. Escena: ${ambiente} ` +
+  return `Fotografía publicitaria realista de catálogo, horizontal 16:9, a pantalla completa, de borde a borde, sin bordes, sin márgenes ni color sólido de fondo. Escena: ${ambiente} ` +
     `Coloca EXACTAMENTE el producto de la imagen de referencia (${nombreProducto}) dentro de la escena, de frente y bien integrado: ` +
     `misma forma, mismo color, mismos paneles, logotipo y pantalla que la referencia, sin inventar detalles ni cambiar el diseño. ` +
     `Iluminación y sombras coherentes con el ambiente y sombra natural sobre el piso. ` +
@@ -710,7 +701,7 @@ async function obtenerAmbiente(tipo, ambienteDescripcion, nombreProducto) {
     const { imagen_base64, media_type } = await llamarWorker("/api/imagen", cuerpo);
     return { img: await cargarImagen(`data:${media_type};base64,${imagen_base64}`), integrado: true };
   } catch (e) {
-    error((($("error").textContent) ? $("error").textContent + "\n" : "") + `Ambiente "${tipo}" con respaldo: ${e.message}`);
+    error((($("error").textContent) ? $("error").textContent + "\n" : "") + `No se pudo generar el ambiente "${tipo}" con IA (se usó un fondo de respaldo). Motivo: ${e.message}`);
     return { img: escenaRespaldo(tipo), integrado: false };
   }
 }
@@ -834,7 +825,7 @@ async function iniciar() {
   };
   estado.logo = await cargarImagen("assets/logo_smc_blanco.png");
   await precargarIconos();
-  try { $("urlWorker").value = localStorage.getItem("smc_worker_url") || ""; } catch (e) { /* sin almacenamiento */ }
+  try { $("urlWorker").value = localStorage.getItem("smc_worker_url") || $("urlWorker").value; } catch (e) { /* sin almacenamiento */ }
 }
 
 $("urlWorker").addEventListener("change", () => {
