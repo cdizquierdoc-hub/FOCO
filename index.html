@@ -850,9 +850,16 @@ $("fotos").addEventListener("change", async (e) => {
   const f = e.target.files[0];
   if (!f) return;
   try {
-    estado.fotoBase64 = await archivoABase64(f);
-    estado.fotoMedia = f.type || "image/png";
     const img = await archivoAImagen(f);
+    // Referencia reducida para Gemini (evita enviar archivos muy pesados)
+    const k = Math.min(1, 1024 / Math.max(img.width, img.height));
+    const ref = document.createElement("canvas");
+    ref.width = Math.round(img.width * k); ref.height = Math.round(img.height * k);
+    const rctx = ref.getContext("2d");
+    rctx.fillStyle = "#ffffff"; rctx.fillRect(0, 0, ref.width, ref.height);
+    rctx.drawImage(img, 0, 0, ref.width, ref.height);
+    estado.fotoBase64 = ref.toDataURL("image/jpeg", 0.9).split(",")[1];
+    estado.fotoMedia = "image/jpeg";
     estado.producto = recortarProducto(img);
     $("miniProducto").src = estado.producto.toDataURL("image/png");
     $("miniProducto").hidden = false;
