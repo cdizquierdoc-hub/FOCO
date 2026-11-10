@@ -172,7 +172,8 @@ async function imagenWorkersAI(ambiente, env, cors) {
     "iluminación cálida y elegante, tonos madera oscura y mármol, enfoque nítido y realista. " +
     "Sin personas, sin electrodomésticos, sin texto ni logotipos, sin bordes ni márgenes. " +
     "Espacio despejado en el centro y a la derecha para colocar un producto. Escena: " + ambiente;
-  const negativo = "personas, gente, texto, letras, logotipo, marca de agua, calle, ciudad, exterior, " +
+  const negativo = "dormitorio, cama, sofá, sala de estar, habitación, cuarto, oficina, baño, " +
+    "personas, gente, texto, letras, logotipo, marca de agua, calle, ciudad, exterior, " +
     "edificio urbano, vista a la calle, autos, borroso, dibujo, caricatura, ilustración, collage, " +
     "marco, bordes, distorsionado, electrodoméstico, refrigeradora, lavadora";
   const res = await env.AI.run("@cf/stabilityai/stable-diffusion-xl-base-1.0", {
