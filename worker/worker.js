@@ -40,6 +40,8 @@ Lee el spec sheet y responde SOLO con un objeto JSON válido (sin texto extra, s
 Reglas:
 - Escribe todo en español. No uses palabras en inglés (por ejemplo "housing", "cool-touch" o "inverter" fuera del campo inverter). Si el spec sheet trae un término en inglés, dilo con palabras simples en español.
 - Explica cada beneficio con palabras que entienda cualquier cliente, sin jerga técnica sin explicar.
+- Las características que te indico SÍ las tiene el producto. Nunca escribas que el producto no cuenta con ellas, ni que no las tiene, ni frases de contraste como "pero sigue siendo". Escribe siempre en positivo: qué hace la característica y qué gana el cliente.
+- Si el spec sheet no detalla una característica, explica su beneficio general en palabras sencillas, sin inventar cifras ni datos técnicos.
 - "modelo": {REGLA_CODIGO}.
 - "beneficios" debe tener exactamente 4 elementos, en el MISMO orden de las características que te indican abajo. El título es la característica (puedes pulirla), y el texto describe el beneficio para el cliente usando solo datos del spec sheet.
 - "escenas": el ambiente debe corresponder a la categoría. Refrigeradora o congelador: interior de cocina moderna de noche, con encimera de mármol oscuro, gabinetes de madera y luz LED cálida bajo los gabinetes. Lavadora o secadora: lavandería moderna con iluminación cálida. Aire acondicionado: sala o dormitorio. Describe solo el ambiente interior, nunca el producto, y nunca calles, exteriores ni ciudades.
