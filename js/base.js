@@ -270,7 +270,7 @@ function productoEl(i, h, cx, base) {
 /* Panel en chevron (mitad derecha de la lámina) con el ambiente tintado en azul */
 const CHEVRON_DER = [[0.0483, 0], [1, 0], [1, 1], [0.0483, 1], [0.3129, 0.5]];
 function panelChevron(img) {
-  return imagenEl(img, { x: 760, y: 0, w: 1160, h: H, pts: CHEVRON_DER, tinte: false, fondo: true });
+  return imagenEl(img, { x: 760, y: 0, w: 1160, h: H, pts: CHEVRON_DER, tinte: false, fondo: true, aclarar: true });
 }
 
 function mapPts(e, pts) { return pts.map(([u, v]) => [e.x + u * e.w, e.y + v * e.h]); }
@@ -300,7 +300,9 @@ function dibujarImagen(ctx, e) {
   ctx.save();
   rutaForma(ctx, e);
   ctx.clip();
+  if (e.aclarar) ctx.filter = "brightness(1.3) contrast(0.92)";
   drawCover(ctx, e.img, e.x, e.y, e.w, e.h);
+  ctx.filter = "none";
   if (e.tinte) {
     ctx.globalCompositeOperation = "color";
     ctx.fillStyle = "rgba(71,169,228,.92)"; ctx.fillRect(e.x, e.y, e.w, e.h);
