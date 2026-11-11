@@ -50,6 +50,10 @@ Reglas:
 
 Características principales que el usuario definió (en este orden):`;
 
+const PROMPT_SUGERIR = `Lee el spec sheet y responde SOLO con JSON válido: {"caracteristicas": ["...", "...", "...", "..."]}.
+Propón las 4 características principales más vendedoras del producto, en español (sin palabras en inglés), con títulos cortos de 2 a 4 palabras
+(ej. "Panel digital exterior", "Apagado automático"). Usa solo datos del spec sheet.`;
+
 const ORIGENES_PERMITIDOS = [
   "https://cdizquierdoc.github.io",
   "https://cdizquierdoc-hub.github.io",
