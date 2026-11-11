@@ -170,7 +170,22 @@ $("spec").addEventListener("change", async (e) => {
     else estado.specBase64 = await archivoABase64(f);
   } catch (err) { error("No se pudo leer el archivo: " + err.message); }
   validar();
+  if (estado.specBase64 || estado.specTexto) await sugerirCaracteristicas();
 });
+
+async function sugerirCaracteristicas() {
+  try {
+    log("Leyendo el spec sheet para sugerir las 4 características...");
+    const { caracteristicas } = await llamarWorker("/api/sugerir", {
+      archivo_base64: estado.specBase64, media_type: estado.specMedia, texto_spec: estado.specTexto
+    });
+    caracteristicas.slice(0, 4).forEach((t, i) => { estado.feats[i] = t; $("f" + i).value = t; });
+    log("Sugerimos 4 características a partir del spec sheet. Revísalas o edítalas si quieres.");
+  } catch (e) {
+    error("No se pudieron sugerir las características (puedes escribirlas tú): " + e.message);
+  }
+  validar();
+}
 
 document.querySelectorAll("[data-feat]").forEach((el) => {
   el.addEventListener("input", () => { estado.feats[+el.dataset.feat] = el.value; validar(); });

@@ -75,6 +75,7 @@ export default {
     try {
       if (url.pathname === "/api/extraer") return await extraer(body, env, cors);
       if (url.pathname === "/api/imagen") return await imagen(body, env, cors);
+      if (url.pathname === "/api/sugerir") return await sugerir(body, env, cors);
       return json({ error: "Ruta no encontrada" }, 404, cors);
     } catch (e) {
       return json({ error: "Error interno: " + (e && e.message ? e.message : String(e)) }, 500, cors);
@@ -192,4 +193,39 @@ async function imagenWorkersAI(ambiente, env, cors) {
     binario += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
   }
   return json({ imagen_base64: btoa(binario), media_type: "image/png", incluye_producto: false }, 200, cors);
+}
+
+// Sugiere las 4 características principales a partir del spec sheet (el usuario puede editarlas)
+const PROMPT_SUGERIR = `Lee el spec sheet y responde SOLO con JSON válido: {"caracteristicas": ["...", "...", "...", "..."]}.
+Propón las 4 características principales más vendedoras del producto, en español, con títulos cortos de 2 a 4 palabras
+(ej. "Panel digital exterior", "Tecnología Inverter"). Usa solo datos del spec sheet.`;
+
+async function sugerir(body, env, cors) {
+  if (!env.ANTHROPIC_API_KEY) return json({ error: "Falta ANTHROPIC_API_KEY en el Worker" }, 500, cors);
+  const { archivo_base64, media_type, texto_spec } = body;
+  if (!texto_spec && (!archivo_base64 || !media_type)) return json({ error: "Falta el spec sheet" }, 400, cors);
+  const bloque = texto_spec
+    ? { type: "text", text: "Spec sheet (Excel/CSV convertido a texto):\n" + String(texto_spec).slice(0, 150000) }
+    : media_type === "application/pdf"
+      ? { type: "document", source: { type: "base64", media_type, data: archivo_base64 } }
+      : { type: "image", source: { type: "base64", media_type, data: archivo_base64 } };
+  const resp = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: { "x-api-key": env.ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "content-type": "application/json" },
+    body: JSON.stringify({
+      model: env.TEXT_MODEL || MODELO_TEXTO,
+      max_tokens: 400,
+      messages: [{ role: "user", content: [bloque, { type: "text", text: PROMPT_SUGERIR }] }],
+    }),
+  });
+  const data = await resp.json();
+  if (!resp.ok) return json({ error: "Claude: " + (data.error && data.error.message) }, 502, cors);
+  const texto = (data.content || []).filter((b) => b.type === "text").map((b) => b.text).join("");
+  const limpio = texto.replace(/^```(json)?/i, "").replace(/```$/, "").trim();
+  let parsed;
+  try { parsed = JSON.parse(limpio); } catch (e) { return json({ error: "Claude no devolvió JSON válido" }, 502, cors); }
+  if (!Array.isArray(parsed.caracteristicas) || parsed.caracteristicas.length < 4) {
+    return json({ error: "Claude no sugirió 4 características" }, 502, cors);
+  }
+  return json({ caracteristicas: parsed.caracteristicas.slice(0, 4).map((c) => String(c)) }, 200, cors);
 }
