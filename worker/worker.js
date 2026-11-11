@@ -1,12 +1,13 @@
 // Intermediario seguro para la app de fichas SMC.
-// Guarda las claves de API como secretos de Cloudflare (nunca en GitHub).
+// Usa solo servicios gratuitos de Cloudflare (Workers AI), sin claves de pago.
 //
 // Rutas:
-//   POST /api/extraer  -> Claude lee el spec sheet (PDF o imagen) y devuelve JSON
-//   POST /api/imagen   -> Gemini genera el ambiente lifestyle (sin producto)
+//   POST /api/extraer  -> Workers AI lee el spec sheet (Excel/CSV convertido a texto) y devuelve la ficha JSON
+//   POST /api/sugerir  -> Workers AI sugiere las 4 características principales (Excel/CSV)
+//   POST /api/imagen   -> Workers AI (SDXL) genera el ambiente de cocina sin producto
 
-const MODELO_TEXTO = "claude-sonnet-5-5";
-const MODELO_IMAGEN_DEFAULT = "gemini-2.5-flash-image";
+const MODELO_TEXTO_GRATIS = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
+const SOLO_EXCEL = "Por ahora la lectura gratuita solo funciona con Excel o CSV. Sube el Excel del spec sheet o escribe las 4 características a mano.";
 
 const PROMPT_EXTRAER = `Eres un redactor técnico de Cresa Retail para fichas comerciales de electrodomésticos SMC.
 Lee el spec sheet adjunto y responde SOLO con un objeto JSON válido (sin texto extra, sin markdown) con esta forma:
@@ -33,6 +34,11 @@ Reglas:
 - No inventes datos que no estén en el spec sheet. Si un dato no existe, omítelo.
 
 Características principales que el usuario definió (en este orden):`;
+
+// Sugiere las 4 características principales a partir del spec sheet (el usuario puede editarlas)
+const PROMPT_SUGERIR = `Lee el spec sheet y responde SOLO con JSON válido: {"caracteristicas": ["...", "...", "...", "..."]}.
+Propón las 4 características principales más vendedoras del producto, en español, con títulos cortos de 2 a 4 palabras
+(ej. "Panel digital exterior", "Tecnología Inverter"). Usa solo datos del spec sheet.`;
 
 const ORIGENES_PERMITIDOS = [
   "https://cdizquierdoc.github.io",
@@ -83,89 +89,55 @@ export default {
   },
 };
 
+// Llama al modelo de texto gratuito de Workers AI
+async function textoIA(env, instruccion, specTexto, maxTokens) {
+  if (!env.AI) throw new Error("Falta el binding AI (Workers AI) en el Worker");
+  const res = await env.AI.run(MODELO_TEXTO_GRATIS, {
+    messages: [
+      { role: "system", content: "Responde solo con JSON válido, sin texto extra ni markdown." },
+      { role: "user", content: "Spec sheet (Excel/CSV convertido a texto):\n" + String(specTexto).slice(0, 40000) + "\n\n" + instruccion },
+    ],
+    max_tokens: maxTokens,
+  });
+  const salida = res && (res.response !== undefined ? res.response : res.result && res.result.response);
+  return typeof salida === "string" ? salida : JSON.stringify(salida || "");
+}
+
+// Toma el primer objeto {...} de la respuesta, aunque venga con texto alrededor
+function extraerJson(texto) {
+  const ini = texto.indexOf("{"), fin = texto.lastIndexOf("}");
+  if (ini === -1 || fin <= ini) return null;
+  try { return JSON.parse(texto.slice(ini, fin + 1)); } catch (e) { return null; }
+}
+
 async function extraer(body, env, cors) {
-  if (!env.ANTHROPIC_API_KEY) return json({ error: "Falta ANTHROPIC_API_KEY en el Worker" }, 500, cors);
-  const { archivo_base64, media_type, caracteristicas, texto_spec } = body;
-  if (!texto_spec && (!archivo_base64 || !media_type)) return json({ error: "Falta el spec sheet" }, 400, cors);
+  const { caracteristicas, texto_spec } = body;
+  if (!texto_spec) return json({ error: SOLO_EXCEL }, 400, cors);
   if (!Array.isArray(caracteristicas) || caracteristicas.length !== 4 || caracteristicas.some((c) => !c || !String(c).trim())) {
     return json({ error: "Se requieren exactamente 4 características" }, 400, cors);
   }
-
-  const bloqueArchivo =
-    media_type === "application/pdf"
-      ? { type: "document", source: { type: "base64", media_type, data: archivo_base64 } }
-      : { type: "image", source: { type: "base64", media_type, data: archivo_base64 } };
-
   const lista = caracteristicas.map((c, i) => `${i + 1}) ${String(c).trim()}`).join("\n");
-
-  const resp = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: {
-      "x-api-key": env.ANTHROPIC_API_KEY,
-      "anthropic-version": "2023-06-01",
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
-      model: env.TEXT_MODEL || MODELO_TEXTO,
-      max_tokens: 3000,
-      messages: [
-        {
-          role: "user",
-          content: texto_spec
-            ? [{ type: "text", text: "Spec sheet (Excel/CSV convertido a texto):\n" + String(texto_spec).slice(0, 150000) }, { type: "text", text: PROMPT_EXTRAER + "\n" + lista }]
-            : [bloqueArchivo, { type: "text", text: PROMPT_EXTRAER + "\n" + lista }],
-        },
-      ],
-    }),
-  });
-
-  const data = await resp.json();
-  if (!resp.ok) return json({ error: "Claude: " + (data.error && data.error.message) }, 502, cors);
-
-  const texto = (data.content || []).filter((b) => b.type === "text").map((b) => b.text).join("");
-  const limpio = texto.replace(/^```(json)?/i, "").replace(/```$/, "").trim();
-  let ficha;
-  try {
-    ficha = JSON.parse(limpio);
-  } catch (e) {
-    return json({ error: "Claude no devolvió JSON válido", crudo: texto.slice(0, 500) }, 502, cors);
-  }
+  const texto = await textoIA(env, PROMPT_EXTRAER + "\n" + lista, texto_spec, 2500);
+  const ficha = extraerJson(texto);
+  if (!ficha) return json({ error: "La IA gratuita no devolvió una ficha válida. Respuesta: " + texto.slice(0, 200) }, 502, cors);
   return json({ ficha }, 200, cors);
 }
 
-async function imagen(body, env, cors) {
-  const { prompt, ambiente, referencia_base64, referencia_media } = body;
-  if (!prompt && !ambiente) return json({ error: "Falta el prompt" }, 400, cors);
-  // Por defecto usa Workers AI (plan gratuito de Cloudflare). Gemini solo si se activa IMAGE_PROVIDER=gemini.
-  if (env.IMAGE_PROVIDER !== "gemini") return await imagenWorkersAI(ambiente || prompt, env, cors);
-  if (!env.GEMINI_API_KEY) return json({ error: "Falta GEMINI_API_KEY en el Worker" }, 500, cors);
-  const entrada = [];
-  if (referencia_base64) {
-    entrada.push({ inlineData: { mimeType: referencia_media || "image/png", data: referencia_base64 } });
+async function sugerir(body, env, cors) {
+  const { texto_spec } = body;
+  if (!texto_spec) return json({ error: SOLO_EXCEL }, 400, cors);
+  const texto = await textoIA(env, PROMPT_SUGERIR, texto_spec, 400);
+  const parsed = extraerJson(texto);
+  if (!parsed || !Array.isArray(parsed.caracteristicas) || parsed.caracteristicas.length < 4) {
+    return json({ error: "La IA gratuita no sugirió 4 características. Respuesta: " + texto.slice(0, 200) }, 502, cors);
   }
-  entrada.push({ text: prompt });
+  return json({ caracteristicas: parsed.caracteristicas.slice(0, 4).map((c) => String(c)) }, 200, cors);
+}
 
-  const modelo = env.IMAGE_MODEL || MODELO_IMAGEN_DEFAULT;
-  const resp = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${modelo}:generateContent`,
-    {
-      method: "POST",
-      headers: { "x-goog-api-key": env.GEMINI_API_KEY, "content-type": "application/json" },
-      body: JSON.stringify({
-        contents: [{ parts: entrada }],
-        generationConfig: { responseModalities: ["TEXT", "IMAGE"] },
-      }),
-    }
-  );
-
-  const data = await resp.json();
-  if (!resp.ok) return json({ error: "Gemini: " + (data.error && data.error.message) }, 502, cors);
-
-  const partes = (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) || [];
-  const img = partes.find((p) => p.inlineData || p.inline_data);
-  if (!img) return json({ error: "Gemini no devolvió imagen" }, 502, cors);
-  const inl = img.inlineData || img.inline_data;
-  return json({ imagen_base64: inl.data, media_type: inl.mimeType || inl.mime_type || "image/png" }, 200, cors);
+async function imagen(body, env, cors) {
+  const { ambiente, prompt } = body;
+  if (!prompt && !ambiente) return json({ error: "Falta el prompt" }, 400, cors);
+  return await imagenWorkersAI(ambiente || prompt, env, cors);
 }
 
 // Ambiente vacío con Workers AI (gratis). La app pega encima la foto real del producto.
@@ -183,53 +155,13 @@ async function imagenWorkersAI(ambiente, env, cors) {
   const res = await env.AI.run("@cf/stabilityai/stable-diffusion-xl-base-1.0", {
     prompt, negative_prompt: negativo, width: 1344, height: 768
   });
-  let bytes;
   if (res && typeof res.image === "string") {
     return json({ imagen_base64: res.image, media_type: "image/png", incluye_producto: false }, 200, cors);
   }
-  bytes = new Uint8Array(await new Response(res).arrayBuffer());
+  const bytes = new Uint8Array(await new Response(res).arrayBuffer());
   let binario = "";
   for (let i = 0; i < bytes.length; i += 0x8000) {
     binario += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
   }
   return json({ imagen_base64: btoa(binario), media_type: "image/png", incluye_producto: false }, 200, cors);
-}
-
-// Sugiere las 4 características principales a partir del spec sheet (el usuario puede editarlas)
-const PROMPT_SUGERIR = `Lee el spec sheet y responde SOLO con JSON válido: {"caracteristicas": ["...", "...", "...", "..."]}.
-Propón las 4 características principales más vendedoras del producto, en español, con títulos cortos de 2 a 4 palabras
-(ej. "Panel digital exterior", "Tecnología Inverter"). Usa solo datos del spec sheet.`;
-
-async function sugerir(body, env, cors) {
-  if (!env.ANTHROPIC_API_KEY) return json({ error: "Falta ANTHROPIC_API_KEY en el Worker" }, 500, cors);
-  const { archivo_base64, media_type, texto_spec } = body;
-  if (!texto_spec && (!archivo_base64 || !media_type)) return json({ error: "Falta el spec sheet" }, 400, cors);
-  const bloque = texto_spec
-    ? { type: "text", text: "Spec sheet (Excel/CSV convertido a texto):\n" + String(texto_spec).slice(0, 150000) }
-    : media_type === "application/pdf"
-      ? { type: "document", source: { type: "base64", media_type, data: archivo_base64 } }
-      : { type: "image", source: { type: "base64", media_type, data: archivo_base64 } };
-  const resp = await fetch("https://api.anthropic.com/v1/messages", {
-    method: "POST",
-    headers: { "x-api-key": env.ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-    body: JSON.stringify({
-      model: env.TEXT_MODEL || MODELO_TEXTO,
-      max_tokens: 1000,
-      messages: [{ role: "user", content: [bloque, { type: "text", text: PROMPT_SUGERIR }] }],
-    }),
-  });
-  const data = await resp.json();
-  if (!resp.ok) return json({ error: "Claude: " + (data.error && data.error.message) }, 502, cors);
-  const texto = (data.content || []).filter((b) => b.type === "text").map((b) => b.text).join("");
-  // Toma el primer objeto {...} aunque Claude escriba texto alrededor o use ```json
-  const ini = texto.indexOf("{"), fin = texto.lastIndexOf("}");
-  let parsed = null;
-  if (ini !== -1 && fin > ini) {
-    try { parsed = JSON.parse(texto.slice(ini, fin + 1)); } catch (e) { parsed = null; }
-  }
-  if (!parsed) return json({ error: "Claude no devolvió JSON válido. Respuesta: " + texto.slice(0, 200) }, 502, cors);
-  if (!Array.isArray(parsed.caracteristicas) || parsed.caracteristicas.length < 4) {
-    return json({ error: "Claude no sugirió 4 características. Respuesta: " + texto.slice(0, 200) }, 502, cors);
-  }
-  return json({ caracteristicas: parsed.caracteristicas.slice(0, 4).map((c) => String(c)) }, 200, cors);
 }
