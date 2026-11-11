@@ -121,6 +121,11 @@
   .dz-mini { min-height:120px; padding:16px 12px; }
   .vista-correo { background:#eef3f8; border-radius:16px; padding:12px; margin-top:16px; }
   .vista-correo canvas { display:block; border-radius:10px; box-shadow:0 8px 24px rgba(23,38,79,.12); }
+  .fotos-lista { display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:10px; margin-top:14px; }
+  .foto-item { display:flex; align-items:center; gap:10px; border:1px solid var(--borde); border-radius:14px; padding:8px; background:#fff; }
+  .foto-item img { width:56px; height:56px; object-fit:contain; border-radius:10px; background:#f3f7fb; flex:none; }
+  .foto-item span { flex:1; font-size:12px; color:var(--gris); word-break:break-all; min-width:0; }
+  .foto-item select { font:inherit; font-size:13px; padding:6px 8px; border-radius:10px; border:1.5px solid var(--borde); }
 </style>
 </head>
 <body>
@@ -264,7 +269,7 @@
         <label class="dz">
           <div class="ico"><svg viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"/></svg></div>
           <strong>Fotos de los productos</strong>
-          <span class="dz-nombre" data-def="PNG con fondo transparente o JPG. Puedes elegir de 1 a 4.">PNG con fondo transparente o JPG. Puedes elegir de 1 a 4.</span>
+          <span class="dz-nombre" data-def="PNG con fondo transparente o JPG. Puedes elegir varias por producto.">PNG con fondo transparente o JPG. Puedes elegir varias por producto.</span>
           <input type="file" id="cFotos" accept="image/png,image/jpeg,image/webp" multiple>
         </label>
         <label class="dz">
@@ -274,6 +279,15 @@
           <input type="file" id="cSpecs" accept=".xlsx,.xls,.csv" multiple>
         </label>
       </div>
+      <label class="campo" style="margin-top:14px">Número de productos
+        <select id="cNumero">
+          <option value="1">1 producto</option>
+          <option value="2">2 productos</option>
+          <option value="3">3 productos</option>
+          <option value="4">4 productos</option>
+        </select>
+      </label>
+      <div id="cFotosLista" class="fotos-lista"></div>
     </section>
 
     <section class="card">

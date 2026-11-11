@@ -112,15 +112,17 @@ function parrafosCorreo(ctx, texto, x, y, maxW, tam, peso, color, lh, separa) {
 /* Texto de introducción: apertura fija + presentación de los productos */
 function textoIntroCorreo(productos) {
   const n = productos.length;
+  const modelos = productos.map((p) => p.modelo).filter(Boolean);
+  if (!modelos.length) return APERTURA_CORREO;
   if (n === 1 && productos[0].presentacion) return APERTURA_CORREO + "\n" + productos[0].presentacion;
   if (n === 1) {
     const p = productos[0];
+    const f = p.feats.filter(Boolean).map((x) => x.toLowerCase());
+    if (f.length < 3) return APERTURA_CORREO;
     const art = /^(refrigeradora|lavadora|cocina)$/i.test(p.categoria) ? "una" : "un";
-    const f = p.feats.map((x) => x.toLowerCase());
     return APERTURA_CORREO + "\nTe presentamos la nueva " + p.modelo + ", " + art + " " + p.categoria.toLowerCase() +
       " que combina " + f[0] + ", " + f[1] + " y " + f[2] + ", pensadas para brindarte mayor comodidad en casa.";
   }
-  const modelos = productos.map((p) => p.modelo);
   const lista = modelos.length > 1 ? modelos.slice(0, -1).join(", ") + " y " + modelos[modelos.length - 1] : modelos[0];
   return APERTURA_CORREO + "\nTe presentamos " + n + " nuevos productos: " + lista + ", pensados para brindarte mayor comodidad en casa.";
 }
@@ -250,42 +252,64 @@ function renderCorreo(cfg) {
 }
 
 /* ---------- Interfaz ---------- */
+let fotosCorreo = [];   // [{nombre, canvas, miniatura, producto}] (producto = número 1..n)
+let specsCorreo = [];   // archivos de spec sheet; el spec k corresponde al producto k+1
+let datosCorreo = [];   // datos por producto: {modelo, categoria, feats, presentacion}
+const cacheDatosCorreo = new Map();
+
+function nProductosCorreo() { return +$("cNumero").value; }
+function errorCorreo(t) { $("cError").textContent = t || ""; }
+function logCorreo(t) { $("cLog").textContent = t; }
+
 function opcionesCategoria(seleccion) {
   return CATEGORIAS_CORREO.map((c) => `<option${c === seleccion ? " selected" : ""}>${c}</option>`).join("");
 }
 
 function bloqueProducto(i, datos) {
   const d = datos || {};
+  const feats = d.feats || [];
   const div = document.createElement("div");
   div.className = "prod-bloque";
-  const feats = d.feats || [];
+  div.dataset.indice = i;
   div.innerHTML = `
     <div class="prod-h"><div class="num">${i + 1}</div><strong>Producto ${i + 1}</strong></div>
     <div class="grid2">
       <label class="campo">Código del modelo <input type="text" data-campo="modelo" placeholder="Ej. SMCRF14TMGO" value="${(d.modelo || "").replace(/"/g, "&quot;")}"></label>
       <label class="campo">Categoría <select data-campo="categoria">${opcionesCategoria(d.categoria || "Refrigeradora")}</select></label>
     </div>
+    <label class="campo">Foto que se usa en el correo <select data-campo="foto"></select></label>
     <div class="feat"><div class="num">1</div><input type="text" data-campo="f0" placeholder="Característica 1" value="${feats[0] || ""}"></div>
     <div class="feat"><div class="num">2</div><input type="text" data-campo="f1" placeholder="Característica 2" value="${feats[1] || ""}"></div>
     <div class="feat"><div class="num">3</div><input type="text" data-campo="f2" placeholder="Característica 3" value="${feats[2] || ""}"></div>
     <div class="feat"><div class="num">4</div><input type="text" data-campo="f3" placeholder="Característica 4" value="${feats[3] || ""}"></div>`;
-  div._foto = d.foto || null;
+  div._presentacion = d.presentacion || "";
   return div;
+}
+
+/* Llena el menú de fotos del producto con las fotos asignadas a él */
+function llenarSelectFotos(div) {
+  const k = +div.dataset.indice;
+  div._fotos = fotosCorreo.filter((f) => f.producto === k + 1);
+  const sel = div.querySelector('[data-campo="foto"]');
+  const previo = sel.value;
+  sel.innerHTML = div._fotos.length
+    ? div._fotos.map((f, j) => `<option value="${j}">${f.nombre}</option>`).join("")
+    : `<option value="">Sin fotos: asígnale una en la lista de fotos</option>`;
+  if (previo !== "" && +previo < div._fotos.length) sel.value = previo;
 }
 
 function leerBloque(div) {
   const v = (c) => div.querySelector(`[data-campo="${c}"]`).value.trim();
+  const idx = +div.querySelector('[data-campo="foto"]').value;
+  const foto = (div._fotos || [])[idx];
   return {
-    foto: div._foto,
+    foto: foto ? foto.canvas : null,
     modelo: v("modelo"),
     categoria: div.querySelector('[data-campo="categoria"]').value,
     feats: [v("f0"), v("f1"), v("f2"), v("f3")],
     presentacion: div._presentacion || ""
   };
 }
-
-function errorCorreo(t) { $("cError").textContent = t || ""; }
-function logCorreo(t) { $("cLog").textContent = t; }
 
 /* Texto de un spec sheet para la IA gratuita (solo Excel y CSV) */
 async function textoSpecCorreo(archivo) {
@@ -294,54 +318,114 @@ async function textoSpecCorreo(archivo) {
   throw new Error("Por ahora el spec sheet debe ser Excel o CSV (" + archivo.name + ").");
 }
 
-/* Al subir fotos y/o spec sheets: arma un bloque por producto con los datos ya completados */
-async function alSubirInsumosCorreo() {
-  errorCorreo("");
-  const fotos = [...$("cFotos").files].slice(0, MAX_PRODUCTOS_CORREO);
-  const specs = [...$("cSpecs").files].slice(0, MAX_PRODUCTOS_CORREO);
-  const n = Math.max(fotos.length, specs.length);
-  if (n === 0) { $("cProductos").innerHTML = ""; $("cGen").disabled = true; return; }
-  if ($("cFotos").files.length > MAX_PRODUCTOS_CORREO || $("cSpecs").files.length > MAX_PRODUCTOS_CORREO) {
-    errorCorreo("Puedes subir hasta 4 productos. Se usarán los 4 primeros.");
-  }
-  $("cGen").disabled = true;
-  const productos = [];
-  for (let i = 0; i < n; i++) {
-    const p = { foto: null, modelo: "", categoria: "Refrigeradora", feats: ["", "", "", ""], presentacion: "" };
-    try {
-      if (fotos[i]) p.foto = recortarProducto(await archivoAImagen(fotos[i]));
-      if (specs[i]) {
-        logCorreo(`Leyendo el spec sheet del producto ${i + 1} con la IA gratuita...`);
-        const datos = await llamarWorker("/api/datos", { texto_spec: await textoSpecCorreo(specs[i]) });
-        p.modelo = datos.modelo || "";
-        p.categoria = datos.categoria || p.categoria;
-        p.feats = [0, 1, 2, 3].map((k) => (datos.caracteristicas && datos.caracteristicas[k]) || "");
-        p.presentacion = datos.presentacion || "";
-      }
-    } catch (err) {
-      errorCorreo(`No se pudo leer el producto ${i + 1}: ${err.message}. Puedes escribir sus datos a mano.`);
-    }
-    productos.push(p);
-  }
+function miniaturaCorreo(canvas) {
+  const k = 96 / canvas.height;
+  const m = document.createElement("canvas");
+  m.width = Math.round(canvas.width * k); m.height = 96;
+  m.getContext("2d").drawImage(canvas, 0, 0, m.width, m.height);
+  return m.toDataURL("image/png");
+}
+
+/* Lista de fotos subidas, con el producto al que pertenece cada una */
+function renderFotosCorreo() {
+  const n = nProductosCorreo();
+  fotosCorreo.forEach((f) => { if (f.producto > n) f.producto = n; });
+  const cont = $("cFotosLista");
+  cont.innerHTML = "";
+  fotosCorreo.forEach((f, j) => {
+    const item = document.createElement("div");
+    item.className = "foto-item";
+    const opciones = Array.from({ length: n }, (_, k) => `<option value="${k + 1}"${f.producto === k + 1 ? " selected" : ""}>Producto ${k + 1}</option>`).join("");
+    item.innerHTML = `<img src="${f.miniatura}" alt=""><span>${f.nombre}</span><select data-foto="${j}">${opciones}</select>`;
+    cont.appendChild(item);
+  });
+  cont.querySelectorAll("select[data-foto]").forEach((sel) => {
+    sel.addEventListener("change", () => {
+      fotosCorreo[+sel.dataset.foto].producto = +sel.value;
+      actualizarFotosBloques();
+    });
+  });
+}
+
+function actualizarFotosBloques() {
+  $("cProductos").querySelectorAll(".prod-bloque").forEach(llenarSelectFotos);
+}
+
+function actualizarIntro() {
+  const prods = [...$("cProductos").querySelectorAll(".prod-bloque")].map(leerBloque);
+  if (!prods.length) return;
+  $("cIntro").value = textoIntroCorreo(prods);
+}
+
+/* Bloques de producto según el número elegido y los datos de cada spec sheet */
+function renderBloquesCorreo() {
+  const n = nProductosCorreo();
   const cont = $("cProductos");
   cont.innerHTML = "";
-  productos.forEach((p, i) => {
-    const bloque = bloqueProducto(i, p);
-    bloque._foto = p.foto;
-    bloque._presentacion = p.presentacion;
-    cont.appendChild(bloque);
-  });
-  $("cIntro").value = textoIntroCorreo(productos.map((p) => ({ ...p, modelo: p.modelo || "SMC", categoria: p.categoria })));
-  $("cGen").disabled = false;
-  logCorreo("Revisa los datos de cada producto (código, categoría, características y texto) y luego genera el correo.");
+  for (let k = 0; k < n; k++) {
+    const b = bloqueProducto(k, datosCorreo[k] || {});
+    cont.appendChild(b);
+    llenarSelectFotos(b);
+  }
+  actualizarIntro();
+}
+
+async function alCambiarFotos() {
+  errorCorreo("");
+  const archivos = [...$("cFotos").files];
+  const n = nProductosCorreo();
+  fotosCorreo = [];
+  for (let j = 0; j < archivos.length; j++) {
+    try {
+      const canvas = recortarProducto(await archivoAImagen(archivos[j]));
+      // Si hay una foto por producto, se reparten en orden; si no, quedan en el producto 1
+      const producto = archivos.length === n ? j + 1 : 1;
+      fotosCorreo.push({ nombre: archivos[j].name, canvas, miniatura: miniaturaCorreo(canvas), producto });
+    } catch (err) { errorCorreo("No se pudo leer " + archivos[j].name + ": " + err.message); }
+  }
+  renderFotosCorreo();
+  actualizarFotosBloques();
+  actualizarIntro();
+}
+
+async function alCambiarSpecs() {
+  errorCorreo("");
+  specsCorreo = [...$("cSpecs").files];
+  datosCorreo = [];
+  for (let k = 0; k < specsCorreo.length; k++) {
+    const f = specsCorreo[k];
+    const clave = f.name + "|" + f.size;
+    try {
+      if (!cacheDatosCorreo.has(clave)) {
+        logCorreo(`Leyendo el spec sheet ${k + 1} con la IA gratuita...`);
+        const d = await llamarWorker("/api/datos", { texto_spec: await textoSpecCorreo(f) });
+        cacheDatosCorreo.set(clave, {
+          modelo: d.modelo || "",
+          categoria: d.categoria || "Refrigeradora",
+          feats: [0, 1, 2, 3].map((i) => (d.caracteristicas && d.caracteristicas[i]) || ""),
+          presentacion: d.presentacion || ""
+        });
+      }
+      datosCorreo[k] = cacheDatosCorreo.get(clave);
+    } catch (err) {
+      errorCorreo(`No se pudo leer el spec sheet ${k + 1}: ${err.message}. Puedes escribir sus datos a mano.`);
+    }
+  }
+  renderBloquesCorreo();
+  logCorreo("Revisa los datos de cada producto y luego genera el correo.");
+}
+
+function cambiarNumeroCorreo() {
+  renderFotosCorreo();
+  renderBloquesCorreo();
 }
 
 async function generarCorreo() {
   errorCorreo("");
   const productos = [...$("cProductos").querySelectorAll(".prod-bloque")].map(leerBloque);
-  if (!productos.length) return errorCorreo("Sube al menos una foto o spec sheet.");
+  if (!productos.length) return errorCorreo("Elige el número de productos.");
   const faltaFoto = productos.findIndex((p) => !p.foto);
-  if (faltaFoto !== -1) return errorCorreo(`Falta la foto del producto ${faltaFoto + 1}.`);
+  if (faltaFoto !== -1) return errorCorreo(`Falta la foto del producto ${faltaFoto + 1}. Súbela y asígnala a ese producto.`);
   const faltaModelo = productos.findIndex((p) => !p.modelo);
   if (faltaModelo !== -1) return errorCorreo(`Escribe el código del producto ${faltaModelo + 1}.`);
   const faltaFeat = productos.findIndex((p) => p.feats.some((f) => !f));
@@ -387,8 +471,9 @@ function iniciarCorreo() {
       $("modoCorreo").hidden = !correo;
     });
   });
-  $("cFotos").addEventListener("change", alSubirInsumosCorreo);
-  $("cSpecs").addEventListener("change", alSubirInsumosCorreo);
+  $("cFotos").addEventListener("change", alCambiarFotos);
+  $("cSpecs").addEventListener("change", alCambiarSpecs);
+  $("cNumero").addEventListener("change", cambiarNumeroCorreo);
   $("cGen").addEventListener("click", generarCorreo);
   $("cPng").addEventListener("click", () => {
     if (ultimoCorreo) ultimoCorreo.toBlob((b) => descargarBlob(b, "correo_bienvenida_smc.png"));
@@ -401,6 +486,6 @@ function iniciarCorreo() {
     pdf.save("correo_bienvenida_smc.pdf");
   });
   $("cFinal").value = FINAL_CORREO;
-  $("cGen").disabled = true;
+  renderBloquesCorreo();
 }
 iniciarCorreo();
