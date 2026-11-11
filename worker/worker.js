@@ -168,11 +168,12 @@ async function imagen(body, env, cors) {
 // Ambiente vacío con Workers AI (gratis). La app pega encima la foto real del producto.
 async function imagenWorkersAI(ambiente, env, cors) {
   if (!env.AI) return json({ error: "Falta el binding AI (Workers AI) en el Worker" }, 500, cors);
-  const prompt = "Fotografía de interiorismo premium para catálogo, horizontal, de borde a borde, " +
+  const prompt = "Fotografía profesional de una cocina moderna equipada con gabinetes, encimera y electrodomésticos de cocina, " +
+    "horizontal, de borde a borde, " +
     "iluminación cálida y elegante, tonos madera oscura y mármol, enfoque nítido y realista. " +
     "Sin personas, sin electrodomésticos, sin texto ni logotipos, sin bordes ni márgenes. " +
     "Espacio despejado en el centro y a la derecha para colocar un producto. Escena de cocina residencial, no un baño: " + ambiente;
-  const negativo = "dormitorio, cama, sofá, sala de estar, habitación, cuarto, oficina, baño, bañera, tina, ducha, lavabo, azulejos de baño, espejo de baño, " +
+  const negativo = "sala de estar, sofá, sillón, living, televisor, mueble de TV, comedor de sala, estantería de libros, chimenea, dormitorio, cama, sofá, sala de estar, habitación, cuarto, oficina, baño, bañera, tina, ducha, lavabo, azulejos de baño, espejo de baño, " +
     "personas, gente, texto, letras, logotipo, marca de agua, calle, ciudad, exterior, " +
     "edificio urbano, vista a la calle, autos, borroso, dibujo, caricatura, ilustración, collage, " +
     "marco, bordes, distorsionado, electrodoméstico, refrigeradora, lavadora";

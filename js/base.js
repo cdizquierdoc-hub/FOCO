@@ -324,9 +324,17 @@ function dibujarProducto(ctx, e, fotos) {
   const img = fotos[e.foto] || fotos[0];
   if (!img) return;
   if (e.sombra) {
+    // Sombra de contacto: el producto se apoya en una superficie
+    const cx = e.x + e.w / 2, base = e.y + e.h;
     ctx.save();
-    ctx.globalAlpha = 0.5; ctx.filter = "blur(16px)"; ctx.fillStyle = "#000";
-    ctx.beginPath(); ctx.ellipse(e.x + e.w / 2, e.y + e.h + 4, e.w * 0.55, 18, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.translate(cx, base + 6);
+    ctx.scale(1, 0.12);
+    const g = ctx.createRadialGradient(0, 0, 0, 0, 0, e.w * 0.62);
+    g.addColorStop(0, "rgba(0,0,0,0.65)");
+    g.addColorStop(0.6, "rgba(0,0,0,0.25)");
+    g.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(0, 0, e.w * 0.62, 0, Math.PI * 2); ctx.fill();
     ctx.restore();
   }
   ctx.drawImage(img, e.x, e.y, e.w, e.h);

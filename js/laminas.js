@@ -4,9 +4,10 @@
 
 /* Ambiente fijo de cocina para refrigeradoras (la IA no siempre respeta la categoría) */
 const COCINAS = [
+  "cocina equipada con gabinetes, encimera de mármol, estufa y fregadero, sin muebles de sala",
   "cocina residencial con fregadero, estufa y gabinetes de cocina, no es un baño; interior de cocina moderna de noche, encimera de mármol oscuro, gabinetes de madera oscura y luz LED cálida bajo los gabinetes",
   "cocina residencial con fregadero, estufa y gabinetes de cocina, no es un baño; interior de cocina moderna de noche con encimera de mármol oscuro, grifo de bronce y estantes iluminados con plantas",
-  "cocina residencial con fregadero, estufa y gabinetes de cocina, no es un baño; interior de cocina moderna con isla de madera oscura, luz LED cálida y repisas con frascos y utensilios de cocina"
+  "cocina equipada con isla de madera oscura, luz LED cálida y repisas con utensilios de cocina"
 ];
 const LAVANDERIAS = [
   "interior de lavandería moderna, gabinetes claros, piso de cerámica y luz cálida",
@@ -44,7 +45,7 @@ function laminaPortada(D, fi) {
 function laminaBeneficios(D, idx, fi) {
   const amb = idx === 0 ? D.ambientes.b1 : D.ambientes.b2;
   const E = [panelChevron(amb)];
-  E.push(productoEl(fi, 700, 1620, 1000));
+  E.push(productoEl(fi, 860, 1600, 1010));
 
   const enc = fit("REFRIGERADORA SMC " + D.modelo, 800, 680, 60, 40, 24, 1.2);
   E.push(txt({ texto: "REFRIGERADORA SMC " + D.modelo, x: 90, y: 110 - enc.tam * 0.95, w: 680, tam: enc.tam, peso: 800, color: AZUL, lh: 1.2 }));
@@ -84,7 +85,7 @@ function laminaBeneficios(D, idx, fi) {
 
 function laminaCuatro(D, fi) {
   const E = [panelChevron(D.ambientes.b1)];
-  E.push(productoEl(fi, 780, 1620, 1020));
+  E.push(productoEl(fi, 820, 1600, 1020));
   const tit = "CARACTERÍSTICAS PRINCIPALES";
   const t = fit(tit, 800, 700, 80, 64, 40, 1.1);
   E.push(txt({ texto: tit, x: 90, y: 90, w: 700, tam: t.tam, peso: 800, color: AZUL, lh: 1.1 }));
