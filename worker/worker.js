@@ -214,18 +214,22 @@ async function sugerir(body, env, cors) {
     headers: { "x-api-key": env.ANTHROPIC_API_KEY, "anthropic-version": "2023-06-01", "content-type": "application/json" },
     body: JSON.stringify({
       model: env.TEXT_MODEL || MODELO_TEXTO,
-      max_tokens: 400,
+      max_tokens: 1000,
       messages: [{ role: "user", content: [bloque, { type: "text", text: PROMPT_SUGERIR }] }],
     }),
   });
   const data = await resp.json();
   if (!resp.ok) return json({ error: "Claude: " + (data.error && data.error.message) }, 502, cors);
   const texto = (data.content || []).filter((b) => b.type === "text").map((b) => b.text).join("");
-  const limpio = texto.replace(/^```(json)?/i, "").replace(/```$/, "").trim();
-  let parsed;
-  try { parsed = JSON.parse(limpio); } catch (e) { return json({ error: "Claude no devolvió JSON válido" }, 502, cors); }
+  // Toma el primer objeto {...} aunque Claude escriba texto alrededor o use ```json
+  const ini = texto.indexOf("{"), fin = texto.lastIndexOf("}");
+  let parsed = null;
+  if (ini !== -1 && fin > ini) {
+    try { parsed = JSON.parse(texto.slice(ini, fin + 1)); } catch (e) { parsed = null; }
+  }
+  if (!parsed) return json({ error: "Claude no devolvió JSON válido. Respuesta: " + texto.slice(0, 200) }, 502, cors);
   if (!Array.isArray(parsed.caracteristicas) || parsed.caracteristicas.length < 4) {
-    return json({ error: "Claude no sugirió 4 características" }, 502, cors);
+    return json({ error: "Claude no sugirió 4 características. Respuesta: " + texto.slice(0, 200) }, 502, cors);
   }
   return json({ caracteristicas: parsed.caracteristicas.slice(0, 4).map((c) => String(c)) }, 200, cors);
 }
