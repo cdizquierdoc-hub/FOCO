@@ -1,7 +1,7 @@
 /* ==========================================================================
    Correo de bienvenida: gráfica horizontal (1536×1024), según la referencia
-   Lifestyle arriba con el/los productos encima, características en tarjetas
-   con iconos distintos, texto breve y logos de las cadenas al pie.
+   Flujo: subir hasta 4 fotos y/o spec sheets arriba -> datos automáticos
+   (código, categoría, características y texto) -> revisar -> generar.
    ========================================================================== */
 
 const CORREO_W = 1536, CORREO_H = 1024;
@@ -19,9 +19,11 @@ const ARCHIVOS_LOGOS = {
   pagamenos: "assets/correo/logo_pagamenos.png",
   dismayor: "assets/correo/logo_dismayor.png"
 };
-const CATEGORIAS_CORREO = ["Refrigeradora", "Congelador", "Minibar", "Lavadora", "Cocina", "Aire acondicionado", "Otro"];
-const INTRO_CORREO = "En SMC seguimos ampliando nuestro portafolio con productos pensados para tu día a día.";
+const CATEGORIAS_CORREO = ["Refrigeradora", "Congelador", "Minibar", "Lavadora", "Cocina", "Aire acondicionado", "Minidomésticos", "Otro"];
+const APERTURA_CORREO = "En SMC seguimos ampliando nuestro portafolio con productos pensados para hacer tu día a día más práctico.";
+const INTRO_CORREO = APERTURA_CORREO;
 const FINAL_CORREO = "MÁS ESPACIO, MÁS COMODIDAD, MÁS SMC.";
+const MAX_PRODUCTOS_CORREO = 4;
 
 const logosCorreo = {};
 let ultimoCorreo = null;
@@ -95,6 +97,34 @@ function textoCorreo(ctx, texto, x, y, maxW, tam, peso, color, alin, lh, maxLine
   envolver(ctx, texto, maxW).slice(0, maxLineas || 9).forEach((l, i) => ctx.fillText(l, ax, y + i * lh));
 }
 
+/* Párrafos separados por salto de línea; devuelve la altura usada */
+function parrafosCorreo(ctx, texto, x, y, maxW, tam, peso, color, lh, separa) {
+  fuente(ctx, peso, tam);
+  ctx.fillStyle = color; ctx.textAlign = "left";
+  let cy = y;
+  texto.split(/\n+/).map((p) => p.trim()).filter(Boolean).forEach((p) => {
+    envolver(ctx, p, maxW).forEach((l) => { ctx.fillText(l, x, cy); cy += lh; });
+    cy += separa;
+  });
+  return cy;
+}
+
+/* Texto de introducción: apertura fija + presentación de los productos */
+function textoIntroCorreo(productos) {
+  const n = productos.length;
+  if (n === 1 && productos[0].presentacion) return APERTURA_CORREO + "\n" + productos[0].presentacion;
+  if (n === 1) {
+    const p = productos[0];
+    const art = /^(refrigeradora|lavadora|cocina)$/i.test(p.categoria) ? "una" : "un";
+    const f = p.feats.map((x) => x.toLowerCase());
+    return APERTURA_CORREO + "\nTe presentamos la nueva " + p.modelo + ", " + art + " " + p.categoria.toLowerCase() +
+      " que combina " + f[0] + ", " + f[1] + " y " + f[2] + ", pensadas para brindarte mayor comodidad en casa.";
+  }
+  const modelos = productos.map((p) => p.modelo);
+  const lista = modelos.length > 1 ? modelos.slice(0, -1).join(", ") + " y " + modelos[modelos.length - 1] : modelos[0];
+  return APERTURA_CORREO + "\nTe presentamos " + n + " nuevos productos: " + lista + ", pensados para brindarte mayor comodidad en casa.";
+}
+
 /* Dibuja la gráfica completa. cfg = {productos:[{foto, modelo, categoria, feats}], ambiente, logoSMC, logos, intro, final} */
 function renderCorreo(cfg) {
   const c = document.createElement("canvas");
@@ -126,7 +156,7 @@ function renderCorreo(cfg) {
   lineas.forEach((l, i) => ctx.fillText(l, 70, 170 + i * tam * 1.25));
 
   /* 2. Lifestyle con el/los productos encima (bloque redondeado) */
-  const lx = 40, ly = 250, lw2 = 660, lh2 = 430;
+  const lx = 40, ly = 250, lw2 = 660, lh2 = 390;
   ctx.save();
   rrect(ctx, lx, ly, lw2, lh2, 44);
   ctx.clip();
@@ -138,14 +168,14 @@ function renderCorreo(cfg) {
   const fotos = cfg.productos.map((p) => p.foto);
   const ranura = lw2 / n, baseY = ly + lh2 - 28;
   cfg.productos.forEach((p, i) => {
-    const h = Math.min(370, ranura * 0.9 * p.foto.height / p.foto.width);
+    const h = Math.min(340, ranura * 0.9 * p.foto.height / p.foto.width);
     const w = h * p.foto.width / p.foto.height;
     const cx = lx + ranura * (i + 0.5);
     dibujarProducto(ctx, { foto: i, x: cx - w / 2, y: baseY - h, w, h, sombra: true }, fotos);
   });
 
-  /* 3. Texto introductorio breve */
-  textoCorreo(ctx, cfg.intro, 70, 735, 600, 24, 500, MARINO, "left", 36, 3);
+  /* 3. Texto introductorio (dos párrafos) */
+  parrafosCorreo(ctx, cfg.intro, 70, 682, 640, 22, 500, MARINO, 31, 14);
 
   /* 4. Características */
   const areaX = 780, areaW = CORREO_W - areaX - 50, areaY = 110, areaH = 680;
@@ -228,54 +258,18 @@ function bloqueProducto(i, datos) {
   const d = datos || {};
   const div = document.createElement("div");
   div.className = "prod-bloque";
+  const feats = d.feats || [];
   div.innerHTML = `
     <div class="prod-h"><div class="num">${i + 1}</div><strong>Producto ${i + 1}</strong></div>
     <div class="grid2">
-      <label class="campo">Modelo <input type="text" data-campo="modelo" placeholder="Ej. SMCRF14TMGO" value="${(d.modelo || "").replace(/"/g, "&quot;")}"></label>
+      <label class="campo">Código del modelo <input type="text" data-campo="modelo" placeholder="Ej. SMCRF14TMGO" value="${(d.modelo || "").replace(/"/g, "&quot;")}"></label>
       <label class="campo">Categoría <select data-campo="categoria">${opcionesCategoria(d.categoria || "Refrigeradora")}</select></label>
     </div>
-    <div class="grid2">
-      <label class="dz dz-mini">
-        <strong>Foto del producto</strong>
-        <span class="dz-nombre" data-def="PNG con fondo transparente o JPG.">PNG con fondo transparente o JPG.</span>
-        <input type="file" accept="image/png,image/jpeg,image/webp" data-campo="foto">
-      </label>
-      <label class="dz dz-mini">
-        <strong>Spec sheet (opcional)</strong>
-        <span class="dz-nombre" data-def="Excel o CSV: sugiere las 4 características.">Excel o CSV: sugiere las 4 características.</span>
-        <input type="file" accept=".xlsx,.xls,.csv" data-campo="spec">
-      </label>
-    </div>
-    <div class="feat"><div class="num">1</div><input type="text" data-campo="f0" placeholder="Característica 1" value="${(d.feats && d.feats[0]) || ""}"></div>
-    <div class="feat"><div class="num">2</div><input type="text" data-campo="f1" placeholder="Característica 2" value="${(d.feats && d.feats[1]) || ""}"></div>
-    <div class="feat"><div class="num">3</div><input type="text" data-campo="f2" placeholder="Característica 3" value="${(d.feats && d.feats[2]) || ""}"></div>
-    <div class="feat"><div class="num">4</div><input type="text" data-campo="f3" placeholder="Característica 4" value="${(d.feats && d.feats[3]) || ""}"></div>`;
+    <div class="feat"><div class="num">1</div><input type="text" data-campo="f0" placeholder="Característica 1" value="${feats[0] || ""}"></div>
+    <div class="feat"><div class="num">2</div><input type="text" data-campo="f1" placeholder="Característica 2" value="${feats[1] || ""}"></div>
+    <div class="feat"><div class="num">3</div><input type="text" data-campo="f2" placeholder="Característica 3" value="${feats[2] || ""}"></div>
+    <div class="feat"><div class="num">4</div><input type="text" data-campo="f3" placeholder="Característica 4" value="${feats[3] || ""}"></div>`;
   div._foto = d.foto || null;
-
-  div.querySelector('[data-campo="foto"]').addEventListener("change", async (e) => {
-    const f = e.target.files[0];
-    if (!f) return;
-    try {
-      div._foto = recortarProducto(await archivoAImagen(f));
-      const zona = div.querySelector('[data-campo="foto"]').closest(".dz");
-      zona.classList.add("listo");
-      zona.querySelector(".dz-nombre").textContent = f.name;
-    } catch (err) { errorCorreo("No se pudo leer la foto: " + err.message); }
-  });
-
-  div.querySelector('[data-campo="spec"]').addEventListener("change", async (e) => {
-    const f = e.target.files[0];
-    if (!f) return;
-    const zona = div.querySelector('[data-campo="spec"]').closest(".dz");
-    zona.classList.add("listo");
-    zona.querySelector(".dz-nombre").textContent = f.name;
-    try {
-      const texto = /\.(xlsx|xls)$/i.test(f.name) ? await excelATexto(f) : await f.text();
-      const { caracteristicas } = await llamarWorker("/api/sugerir", { texto_spec: texto });
-      caracteristicas.slice(0, 4).forEach((t, k) => { div.querySelector(`[data-campo="f${k}"]`).value = t; });
-      logCorreo("Sugerí las características del producto " + (i + 1) + ". Revísalas si quieres.");
-    } catch (err) { errorCorreo("No se pudieron sugerir las características del producto " + (i + 1) + ": " + err.message); }
-  });
   return div;
 }
 
@@ -285,28 +279,71 @@ function leerBloque(div) {
     foto: div._foto,
     modelo: v("modelo"),
     categoria: div.querySelector('[data-campo="categoria"]').value,
-    feats: [v("f0"), v("f1"), v("f2"), v("f3")]
+    feats: [v("f0"), v("f1"), v("f2"), v("f3")],
+    presentacion: div._presentacion || ""
   };
-}
-
-function crearBloquesCorreo() {
-  const n = +$("cNumero").value;
-  const cont = $("cProductos");
-  const previos = [...cont.querySelectorAll(".prod-bloque")].map((b) => ({ ...leerBloque(b), foto: b._foto }));
-  cont.innerHTML = "";
-  for (let i = 0; i < n; i++) cont.appendChild(bloqueProducto(i, previos[i]));
 }
 
 function errorCorreo(t) { $("cError").textContent = t || ""; }
 function logCorreo(t) { $("cLog").textContent = t; }
 
+/* Texto de un spec sheet para la IA gratuita (solo Excel y CSV) */
+async function textoSpecCorreo(archivo) {
+  if (/\.(xlsx|xls)$/i.test(archivo.name)) return await excelATexto(archivo);
+  if (/\.csv$/i.test(archivo.name)) return await archivo.text();
+  throw new Error("Por ahora el spec sheet debe ser Excel o CSV (" + archivo.name + ").");
+}
+
+/* Al subir fotos y/o spec sheets: arma un bloque por producto con los datos ya completados */
+async function alSubirInsumosCorreo() {
+  errorCorreo("");
+  const fotos = [...$("cFotos").files].slice(0, MAX_PRODUCTOS_CORREO);
+  const specs = [...$("cSpecs").files].slice(0, MAX_PRODUCTOS_CORREO);
+  const n = Math.max(fotos.length, specs.length);
+  if (n === 0) { $("cProductos").innerHTML = ""; $("cGen").disabled = true; return; }
+  if ($("cFotos").files.length > MAX_PRODUCTOS_CORREO || $("cSpecs").files.length > MAX_PRODUCTOS_CORREO) {
+    errorCorreo("Puedes subir hasta 4 productos. Se usarán los 4 primeros.");
+  }
+  $("cGen").disabled = true;
+  const productos = [];
+  for (let i = 0; i < n; i++) {
+    const p = { foto: null, modelo: "", categoria: "Refrigeradora", feats: ["", "", "", ""], presentacion: "" };
+    try {
+      if (fotos[i]) p.foto = recortarProducto(await archivoAImagen(fotos[i]));
+      if (specs[i]) {
+        logCorreo(`Leyendo el spec sheet del producto ${i + 1} con la IA gratuita...`);
+        const datos = await llamarWorker("/api/datos", { texto_spec: await textoSpecCorreo(specs[i]) });
+        p.modelo = datos.modelo || "";
+        p.categoria = datos.categoria || p.categoria;
+        p.feats = [0, 1, 2, 3].map((k) => (datos.caracteristicas && datos.caracteristicas[k]) || "");
+        p.presentacion = datos.presentacion || "";
+      }
+    } catch (err) {
+      errorCorreo(`No se pudo leer el producto ${i + 1}: ${err.message}. Puedes escribir sus datos a mano.`);
+    }
+    productos.push(p);
+  }
+  const cont = $("cProductos");
+  cont.innerHTML = "";
+  productos.forEach((p, i) => {
+    const bloque = bloqueProducto(i, p);
+    bloque._foto = p.foto;
+    bloque._presentacion = p.presentacion;
+    cont.appendChild(bloque);
+  });
+  $("cIntro").value = textoIntroCorreo(productos.map((p) => ({ ...p, modelo: p.modelo || "SMC", categoria: p.categoria })));
+  $("cGen").disabled = false;
+  logCorreo("Revisa los datos de cada producto (código, categoría, características y texto) y luego genera el correo.");
+}
+
 async function generarCorreo() {
   errorCorreo("");
   const productos = [...$("cProductos").querySelectorAll(".prod-bloque")].map(leerBloque);
+  if (!productos.length) return errorCorreo("Sube al menos una foto o spec sheet.");
   const faltaFoto = productos.findIndex((p) => !p.foto);
   if (faltaFoto !== -1) return errorCorreo(`Falta la foto del producto ${faltaFoto + 1}.`);
   const faltaModelo = productos.findIndex((p) => !p.modelo);
-  if (faltaModelo !== -1) return errorCorreo(`Escribe el modelo del producto ${faltaModelo + 1}.`);
+  if (faltaModelo !== -1) return errorCorreo(`Escribe el código del producto ${faltaModelo + 1}.`);
   const faltaFeat = productos.findIndex((p) => p.feats.some((f) => !f));
   if (faltaFeat !== -1) return errorCorreo(`Escribe las 4 características del producto ${faltaFeat + 1}.`);
 
@@ -322,7 +359,7 @@ async function generarCorreo() {
       ambiente,
       logoSMC: estado.logo,
       logos,
-      intro: $("cIntro").value.trim() || INTRO_CORREO,
+      intro: $("cIntro").value.trim() || textoIntroCorreo(productos),
       final: $("cFinal").value.trim() || FINAL_CORREO
     });
     ultimoCorreo = lienzo;
@@ -350,7 +387,8 @@ function iniciarCorreo() {
       $("modoCorreo").hidden = !correo;
     });
   });
-  $("cNumero").addEventListener("change", crearBloquesCorreo);
+  $("cFotos").addEventListener("change", alSubirInsumosCorreo);
+  $("cSpecs").addEventListener("change", alSubirInsumosCorreo);
   $("cGen").addEventListener("click", generarCorreo);
   $("cPng").addEventListener("click", () => {
     if (ultimoCorreo) ultimoCorreo.toBlob((b) => descargarBlob(b, "correo_bienvenida_smc.png"));
@@ -362,8 +400,7 @@ function iniciarCorreo() {
     pdf.addImage(ultimoCorreo.toDataURL("image/jpeg", 0.93), "JPEG", 0, 0, CORREO_W, CORREO_H);
     pdf.save("correo_bienvenida_smc.pdf");
   });
-  $("cIntro").value = INTRO_CORREO;
   $("cFinal").value = FINAL_CORREO;
-  crearBloquesCorreo();
+  $("cGen").disabled = true;
 }
 iniciarCorreo();

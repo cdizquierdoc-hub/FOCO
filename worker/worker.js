@@ -82,6 +82,7 @@ export default {
       if (url.pathname === "/api/extraer") return await extraer(body, env, cors);
       if (url.pathname === "/api/imagen") return await imagen(body, env, cors);
       if (url.pathname === "/api/sugerir") return await sugerir(body, env, cors);
+      if (url.pathname === "/api/datos") return await datos(body, env, cors);
       return json({ error: "Ruta no encontrada" }, 404, cors);
     } catch (e) {
       return json({ error: "Error interno: " + (e && e.message ? e.message : String(e)) }, 500, cors);
@@ -132,6 +133,32 @@ async function sugerir(body, env, cors) {
     return json({ error: "La IA gratuita no sugirió 4 características. Respuesta: " + texto.slice(0, 200) }, 502, cors);
   }
   return json({ caracteristicas: parsed.caracteristicas.slice(0, 4).map((c) => String(c)) }, 200, cors);
+}
+
+// Datos del producto para el correo de bienvenida: código, categoría, 4 características y texto de presentación
+const CATEGORIAS_DATOS = ["Refrigeradora", "Congelador", "Minibar", "Lavadora", "Cocina", "Aire acondicionado", "Minidomésticos", "Otro"];
+const PROMPT_DATOS = `Lee el spec sheet y responde SOLO con JSON válido con esta forma:
+{"modelo": "código exacto del modelo, por ejemplo SMCRF14TMGO",
+ "categoria": "una sola de: Refrigeradora, Congelador, Minibar, Lavadora, Cocina, Aire acondicionado, Minidomésticos, Otro",
+ "caracteristicas": ["4 características principales de venta, de 2 a 4 palabras cada una"],
+ "presentacion": "texto de 2 frases en español con este estilo: 'Te presentamos la nueva SMCRF14TMGO, una refrigeradora que combina gran capacidad, diseño moderno y funcionalidades pensadas para brindarte mayor comodidad en casa.'"}
+Reglas: usa solo datos del spec sheet. La presentación debe tener entre 30 y 45 palabras, mencionar 3 beneficios concretos del spec sheet y terminar con 'pensadas para brindarte mayor comodidad en casa.' El artículo (una/un) debe concordar con la categoría.`;
+
+async function datos(body, env, cors) {
+  const { texto_spec } = body;
+  if (!texto_spec) return json({ error: SOLO_EXCEL }, 400, cors);
+  const texto = await textoIA(env, PROMPT_DATOS, texto_spec, 700);
+  const parsed = extraerJson(texto);
+  if (!parsed) return json({ error: "La IA gratuita no devolvió los datos. Respuesta: " + texto.slice(0, 200) }, 502, cors);
+  const cat = String(parsed.categoria || "");
+  const categoria = CATEGORIAS_DATOS.find((c) => cat.toLowerCase().includes(c.toLowerCase().split(" ")[0])) || "Otro";
+  const caracteristicas = (Array.isArray(parsed.caracteristicas) ? parsed.caracteristicas : []).slice(0, 4).map((c) => String(c));
+  return json({
+    modelo: String(parsed.modelo || "").trim(),
+    categoria,
+    caracteristicas,
+    presentacion: String(parsed.presentacion || "").trim()
+  }, 200, cors);
 }
 
 async function imagen(body, env, cors) {
