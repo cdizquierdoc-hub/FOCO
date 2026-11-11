@@ -9,15 +9,25 @@
 const MODELO_TEXTO_GRATIS = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
 const SOLO_EXCEL = "Por ahora la lectura gratuita solo funciona con Excel o CSV. Sube el Excel del spec sheet o escribe las 4 características a mano.";
 
-const PROMPT_EXTRAER = `Eres un redactor técnico de Cresa Retail para fichas comerciales de electrodomésticos SMC.
+const MARCAS_WORKER = {
+  smc: { nombre: "SMC", regla: "solo el código que empieza con SMC, sin el código del proveedor", ejemplo: "SMCETO750N" },
+  midea: { nombre: "Midea", regla: "solo el código del modelo de la marca Midea, sin el código del proveedor", ejemplo: "código del modelo Midea" }
+};
+// Rellena los datos de la marca en el prompt
+function promptPara(plantilla, marca) {
+  const m = MARCAS_WORKER[marca] || MARCAS_WORKER.smc;
+  return plantilla.split("{MARCA}").join(m.nombre).split("{REGLA_CODIGO}").join(m.regla).split("{EJEMPLO_CODIGO}").join(m.ejemplo);
+}
+
+const PROMPT_EXTRAER = `Eres un redactor técnico de Cresa Retail para fichas comerciales de electrodomésticos {MARCA}.
 Lee el spec sheet y responde SOLO con un objeto JSON válido (sin texto extra, sin markdown) con esta forma:
 {
-  "modelo": "solo el código que empieza con SMC, por ejemplo SMCETO750N",
+  "modelo": "{REGLA_CODIGO}; ejemplo: {EJEMPLO_CODIGO}",
   "tipo": "nombre corto del producto en minúscula, por ejemplo tostadora 2 panes",
   "inverter": true o false (true solo si el spec sheet indica tecnología inverter),
   "subtitulo_ficha": "frase corta en español sobre el producto",
   "categoria": "tipo de producto: refrigeradora, lavadora, cocina, aire acondicionado, etc.",
-  "portada": { "titulo": "REFRIGERACIÓN SMC", "texto": "1 o 2 frases comerciales para la portada" },
+  "portada": { "titulo": "REFRIGERACIÓN {MARCA}", "texto": "1 o 2 frases comerciales para la portada" },
   "escenas": {
     "portada": "ambiente SIN producto donde se usa este tipo de producto, en una frase (ej. cocina moderna de noche con isla de mármol)",
     "beneficios_1_2": "ambiente SIN producto para las características 1 y 2",
@@ -30,7 +40,7 @@ Lee el spec sheet y responde SOLO con un objeto JSON válido (sin texto extra, s
 Reglas:
 - Escribe todo en español. No uses palabras en inglés (por ejemplo "housing", "cool-touch" o "inverter" fuera del campo inverter). Si el spec sheet trae un término en inglés, dilo con palabras simples en español.
 - Explica cada beneficio con palabras que entienda cualquier cliente, sin jerga técnica sin explicar.
-- "modelo" es solo el código que empieza con SMC. No uses el código del proveedor (ej. FT2010A-T).
+- "modelo": {REGLA_CODIGO}.
 - "beneficios" debe tener exactamente 4 elementos, en el MISMO orden de las características que te indican abajo. El título es la característica (puedes pulirla), y el texto describe el beneficio para el cliente usando solo datos del spec sheet.
 - "escenas": el ambiente debe corresponder a la categoría. Refrigeradora o congelador: interior de cocina moderna de noche, con encimera de mármol oscuro, gabinetes de madera y luz LED cálida bajo los gabinetes. Lavadora o secadora: lavandería moderna con iluminación cálida. Aire acondicionado: sala o dormitorio. Describe solo el ambiente interior, nunca el producto, y nunca calles, exteriores ni ciudades.
 - "datos_destacados": exactamente 4 elementos que sean características ADICIONALES, distintas de las 4 principales (ej. capacidad, potencia, nivel de ruido, dimensiones, número de niveles). "valor" corto: una cifra o una palabra. Nunca "Sí" ni "No". Si el spec sheet no alcanza, usa menos elementos.
@@ -39,10 +49,6 @@ Reglas:
 - No inventes datos que no estén en el spec sheet. Si un dato no existe, omítelo.
 
 Características principales que el usuario definió (en este orden):`;
-
-const PROMPT_SUGERIR = `Lee el spec sheet y responde SOLO con JSON válido: {"caracteristicas": ["...", "...", "...", "..."]}.
-Propón las 4 características principales más vendedoras del producto, en español (sin palabras en inglés), con títulos cortos de 2 a 4 palabras
-(ej. "Panel digital exterior", "Apagado automático"). Usa solo datos del spec sheet.`;
 
 const ORIGENES_PERMITIDOS = [
   "https://cdizquierdoc.github.io",
@@ -109,7 +115,8 @@ async function textoIA(env, instruccion, specTexto, maxTokens) {
 }
 
 // Deja solo el código que empieza con SMC (el otro es del proveedor)
-function codigoSMC(t) {
+function codigoSMC(t, marca) {
+  if (marca === "midea") return String(t || "").trim();
   const m = String(t || "").match(/SMC[A-Z0-9-]+/i);
   return m ? m[0].toUpperCase() : String(t || "").trim();
 }
@@ -128,9 +135,9 @@ async function extraer(body, env, cors) {
     return json({ error: "Se requieren exactamente 4 características" }, 400, cors);
   }
   const lista = caracteristicas.map((c, i) => `${i + 1}) ${String(c).trim()}`).join("\n");
-  const texto = await textoIA(env, PROMPT_EXTRAER + "\n" + lista, texto_spec, 2500);
+  const texto = await textoIA(env, promptPara(PROMPT_EXTRAER, body.marca) + "\n" + lista, texto_spec, 2500);
   const ficha = extraerJson(texto);
-  if (ficha) { ficha.modelo = codigoSMC(ficha.modelo); ficha.inverter = ficha.inverter === true; }
+  if (ficha) { ficha.modelo = codigoSMC(ficha.modelo, body.marca); ficha.inverter = ficha.inverter === true; }
   if (!ficha) return json({ error: "La IA gratuita no devolvió una ficha válida. Respuesta: " + texto.slice(0, 200) }, 502, cors);
   return json({ ficha }, 200, cors);
 }
@@ -149,7 +156,7 @@ async function sugerir(body, env, cors) {
 // Datos del producto para el correo de bienvenida: código, categoría, 4 características y texto de presentación
 const CATEGORIAS_DATOS = ["Refrigeradora", "Congelador", "Minibar", "Lavadora", "Cocina", "Aire acondicionado", "Minidomésticos", "Otro"];
 const PROMPT_DATOS = `Lee el spec sheet y responde SOLO con JSON válido con esta forma:
-{"modelo": "solo el código que empieza con SMC, por ejemplo SMCRF14TMGO (no el código del proveedor)",
+{"modelo": "{REGLA_CODIGO}; ejemplo: {EJEMPLO_CODIGO}",
  "inverter": true o false,
  "categoria": "una sola de: Refrigeradora, Congelador, Minibar, Lavadora, Cocina, Aire acondicionado, Minidomésticos, Otro",
  "tipo": "nombre corto y específico del producto en minúscula, por ejemplo sanduchera 2 panes, tostadora, prensa tipo panini, refrigeradora",
@@ -159,14 +166,14 @@ Reglas: usa solo datos del spec sheet. Escribe en español, sin palabras en ingl
 async function datos(body, env, cors) {
   const { texto_spec } = body;
   if (!texto_spec) return json({ error: SOLO_EXCEL }, 400, cors);
-  const texto = await textoIA(env, PROMPT_DATOS, texto_spec, 700);
+  const texto = await textoIA(env, promptPara(PROMPT_DATOS, body.marca), texto_spec, 700);
   const parsed = extraerJson(texto);
   if (!parsed) return json({ error: "La IA gratuita no devolvió los datos. Respuesta: " + texto.slice(0, 200) }, 502, cors);
   const cat = String(parsed.categoria || "");
   const categoria = CATEGORIAS_DATOS.find((c) => cat.toLowerCase().includes(c.toLowerCase().split(" ")[0])) || "Otro";
   const caracteristicas = (Array.isArray(parsed.caracteristicas) ? parsed.caracteristicas : []).slice(0, 4).map((c) => String(c));
   return json({
-    modelo: codigoSMC(parsed.modelo),
+    modelo: codigoSMC(parsed.modelo, body.marca),
     inverter: parsed.inverter === true,
     categoria,
     caracteristicas,

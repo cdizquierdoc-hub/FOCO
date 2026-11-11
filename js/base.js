@@ -407,3 +407,20 @@ function lienzoDeSlide(s) {
   pintarSlide(c.getContext("2d"), s);
   return c;
 }
+
+/* Marca de la ficha y del correo (SMC o Midea). Todo lo demás se mantiene igual */
+const MARCAS = {
+  smc: { nombre: "SMC", logo: "assets/logo_smc_blanco.png" },
+  midea: { nombre: "Midea", logo: "assets/logo_midea_blanco.png" }
+};
+function marcaSeleccionada() {
+  const s = document.getElementById("marca");
+  return s && MARCAS[s.value] ? s.value : "smc";
+}
+function nombreMarca() { return MARCAS[marcaSeleccionada()].nombre; }
+/* Cambia el nombre de la marca en un texto de la ficha (solo si la marca no es SMC) */
+function marcaEnTexto(t) {
+  const m = marcaSeleccionada();
+  if (!t || m === "smc") return t;
+  return String(t).replace(/\bSMC\b/g, MARCAS[m].nombre);
+}

@@ -72,6 +72,27 @@ function datosExtra(lista, principales) {
   }).slice(0, 4);
 }
 
+/* Aplica el nombre de la marca a los textos de la ficha que vienen de la IA */
+function marcaEnFicha(f) {
+  const c = JSON.parse(JSON.stringify(f));
+  if (c.portada) { c.portada.titulo = marcaEnTexto(c.portada.titulo); c.portada.texto = marcaEnTexto(c.portada.texto); }
+  c.subtitulo_ficha = marcaEnTexto(c.subtitulo_ficha);
+  (c.beneficios || []).forEach((x) => { if (x) { x.titulo = marcaEnTexto(x.titulo); x.texto = marcaEnTexto(x.texto); } });
+  (c.despacho || []).forEach((x) => { if (x) x.valor = marcaEnTexto(x.valor); });
+  (c.datos_destacados || []).forEach((x) => { if (x) x.etiqueta = marcaEnTexto(x.etiqueta); });
+  return c;
+}
+
+/* Cambio de marca: se actualiza el logo y los textos de la portada */
+async function cambiarMarca() {
+  const m = marcaSeleccionada();
+  estado.logo = await cargarImagen(MARCAS[m].logo);
+  $("logoHero").src = MARCAS[m].logo;
+  $("logoHero").alt = MARCAS[m].nombre;
+  $("marcaTexto").textContent = MARCAS[m].nombre;
+}
+$("marca").addEventListener("change", cambiarMarca);
+
 async function generar() {
   error(""); $("bGen").disabled = true; $("barra").classList.add("on");
   try {
@@ -82,10 +103,11 @@ async function generar() {
     } else {
       log("Leyendo el spec sheet con la IA gratuita de Cloudflare...");
       const { ficha: f } = await llamarWorker("/api/extraer", {
-        archivo_base64: estado.specBase64, media_type: estado.specMedia, texto_spec: estado.specTexto, caracteristicas: estado.feats.map((f) => f.trim())
+        archivo_base64: estado.specBase64, media_type: estado.specMedia, texto_spec: estado.specTexto, caracteristicas: estado.feats.map((f) => f.trim()), marca: marcaSeleccionada()
       });
-      ficha = f;
+      ficha = marcaEnFicha(f);
     }
+    ficha = marcaEnFicha(ficha);
     const esc = ficha.escenas || FICHA_DEMO.escenas;
     log("Generando los ambientes...");
     const [portada, b1, b2, c4] = await Promise.all([
@@ -231,7 +253,7 @@ function exportarPdf() {
     if (i > 0) pdf.addPage([W, H], "landscape");
     pdf.addImage(lienzoDeSlide(s).toDataURL("image/jpeg", 0.93), "JPEG", 0, 0, W, H);
   });
-  pdf.save(`Ficha_SMC_${estado.modelo || "producto"}.pdf`);
+  pdf.save(`Ficha_${nombreMarca()}_${estado.modelo || "producto"}.pdf`);
 }
 function exportarPptx() {
   const pptx = new PptxGenJS();
@@ -241,7 +263,7 @@ function exportarPptx() {
     const sl = pptx.addSlide();
     sl.addImage({ data: lienzoDeSlide(s).toDataURL("image/jpeg", 0.93), x: 0, y: 0, w: 13.333, h: 7.5 });
   });
-  pptx.writeFile({ fileName: `Ficha_SMC_${estado.modelo || "producto"}.pptx` });
+  pptx.writeFile({ fileName: `Ficha_${nombreMarca()}_${estado.modelo || "producto"}.pptx` });
 }
 $("bVolver").addEventListener("click", () => { $("secEditor").hidden = true; });
 $("bPdf").addEventListener("click", exportarPdf);
@@ -267,7 +289,7 @@ async function iniciar() {
     respaldo: await cargarImagen("assets/fijas/respaldo.jpg"),
     cierre: await cargarImagen("assets/fijas/cierre.jpg")
   };
-  estado.logo = await cargarImagen("assets/logo_smc_blanco.png");
+  estado.logo = await cargarImagen(MARCAS[marcaSeleccionada()].logo);
   await precargarIconos();
   iniciarEditor();
   try { $("urlWorker").value = localStorage.getItem("smc_worker_url") || $("urlWorker").value; } catch (e) { /* sin almacenamiento */ }

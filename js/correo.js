@@ -24,15 +24,15 @@ const ARCHIVOS_LOGOS = {
   dismayor: "assets/correo/logo_dismayor.png"
 };
 const CATEGORIAS_CORREO = ["Refrigeradora", "Congelador", "Minibar", "Lavadora", "Cocina", "Aire acondicionado", "Minidomésticos", "Otro"];
-const APERTURA_CORREO = "En SMC seguimos ampliando nuestro portafolio con productos pensados para hacer tu día a día más práctico.";
-const FINAL_CORREO = "MÁS ESPACIO, MÁS COMODIDAD, MÁS SMC.";
+function aperturaCorreo() { return "En " + nombreMarca() + " seguimos ampliando nuestro portafolio con productos pensados para hacer tu día a día más práctico."; }
+function finalCorreo() { return "MÁS ESPACIO, MÁS COMODIDAD, MÁS " + nombreMarca().toUpperCase() + "."; }
 /* Frase final según la categoría */
 function fraseFinalCorreo(categoria) {
   const c = categoria || "";
-  if (/lavad/i.test(c)) return "MÁS LIMPIEZA, MÁS COMODIDAD, MÁS SMC.";
-  if (/aire/i.test(c)) return "MÁS FRESCURA, MÁS COMODIDAD, MÁS SMC.";
-  if (/minidom|cocina|otro/i.test(c)) return "MÁS TECNOLOGÍA, MÁS PRÁCTICO, MÁS SMC.";
-  return FINAL_CORREO;
+  if (/lavad/i.test(c)) return "MÁS LIMPIEZA, MÁS COMODIDAD, MÁS " + nombreMarca().toUpperCase() + ".";
+  if (/aire/i.test(c)) return "MÁS FRESCURA, MÁS COMODIDAD, MÁS " + nombreMarca().toUpperCase() + ".";
+  if (/minidom|cocina|otro/i.test(c)) return "MÁS TECNOLOGÍA, MÁS PRÁCTICO, MÁS " + nombreMarca().toUpperCase() + ".";
+  return finalCorreo();
 }
 const CIERRE_COMODIDAD = "para brindarte mayor comodidad en casa.";
 const CIERRE_COMIDAS = "para hacer tus comidas más fáciles y prácticas.";
@@ -80,18 +80,18 @@ function cierreCorreo(categoria) {
 function textoIntroCorreo(productos) {
   const n = productos.length;
   const conModelo = productos.filter((p) => p.modelo);
-  if (!conModelo.length) return APERTURA_CORREO;
+  if (!conModelo.length) return aperturaCorreo();
   const nombre = (p) => (p.tipo || p.categoria || "producto").toLowerCase();
   if (n === 1) {
     const p = productos[0];
     const ft = p.feats.filter(Boolean).map((x) => x.toLowerCase());
-    if (ft.length < 3) return APERTURA_CORREO;
-    return APERTURA_CORREO + "\nTe presentamos nuestra " + nombre(p) + " " + p.modelo + ", que combina " +
+    if (ft.length < 3) return aperturaCorreo();
+    return aperturaCorreo() + "\nTe presentamos nuestra " + nombre(p) + " " + p.modelo + ", que combina " +
       ft[0] + ", " + ft[1] + " y " + ft[2] + ", " + cierreCorreo(p.categoria);
   }
   const mayus = (t) => t.charAt(0).toUpperCase() + t.slice(1);
   const items = conModelo.map((p, i) => (i + 1) + ". " + mayus(nombre(p)) + " " + p.modelo + ".");
-  return APERTURA_CORREO + "\nTe presentamos " + n + " nuevos productos:\n" + items.join("\n") + "\n" + mayus(cierreCorreo(productos[0].categoria));
+  return aperturaCorreo() + "\nTe presentamos " + n + " nuevos productos:\n" + items.join("\n") + "\n" + mayus(cierreCorreo(productos[0].categoria));
 }
 
 /* Icono para cada característica del correo, sin repetir */
@@ -151,8 +151,8 @@ function construirCorreo(cfg) {
     els.push(imagenEl(cfg.logoSMC, { x: 70, y: 46, w: lw, h: lh }));
   }
   const titulo = n === 1
-    ? ["CONOCE NUESTRA NUEVA " + (cfg.productos[0].tipo || cfg.productos[0].categoria || "").toUpperCase(), "SMC " + (cfg.productos[0].modelo || "").toUpperCase()]
-    : ["DESCUBRE LO NUEVO DE SMC", n + " nuevos productos para tu hogar"];
+    ? ["CONOCE NUESTRA NUEVA " + (cfg.productos[0].tipo || cfg.productos[0].categoria || "").toUpperCase(), (cfg.productos[0].modelo || "").toUpperCase()]
+    : ["DESCUBRE LO NUEVO DE " + nombreMarca().toUpperCase(), n + " nuevos productos para tu hogar"];
   const tamT = Math.min(...titulo.map((l) => tamUnaLinea(l, 800, 610, 50, 26)));
   titulo.forEach((l, i) => els.push(txt({ x: 70, y: 150 + i * tamT * 1.25, w: 610, texto: l, tam: tamT, peso: 800, color: BLANCO, sombra: true, lh: 1.2 })));
 
@@ -388,11 +388,11 @@ async function alCambiarSpecs() {
   datosCorreo = [];
   for (let k = 0; k < specsCorreo.length; k++) {
     const f = specsCorreo[k];
-    const clave = f.name + "|" + f.size;
+    const clave = f.name + "|" + f.size + "|" + marcaSeleccionada();
     try {
       if (!cacheDatosCorreo.has(clave)) {
         logCorreo(`Leyendo el spec sheet ${k + 1} con la IA gratuita...`);
-        const d = await llamarWorker("/api/datos", { texto_spec: await textoSpecCorreo(f) });
+        const d = await llamarWorker("/api/datos", { texto_spec: await textoSpecCorreo(f), marca: marcaSeleccionada() });
         cacheDatosCorreo.set(clave, {
           modelo: d.modelo || "",
           tipo: d.tipo || "",
@@ -464,7 +464,7 @@ async function generarCorreo() {
       logoSMC: estado.logo,
       logos,
       intro: $("cIntro").value.trim() || textoIntroCorreo(productos),
-      final: $("cFinal").value.trim() || FINAL_CORREO
+      final: $("cFinal").value.trim() || finalCorreo()
     });
     $("cEditar").hidden = false;
     abrirEditorCorreo();
@@ -510,7 +510,7 @@ function iniciarCorreo() {
     pdf.addImage(lienzoDeSlide(correoSlide).toDataURL("image/jpeg", 0.93), "JPEG", 0, 0, CORREO_W, CORREO_H);
     pdf.save("correo_bienvenida_smc.pdf");
   });
-  $("cFinal").value = FINAL_CORREO;
+  $("cFinal").value = finalCorreo();
   // Cualquier cambio en los datos de los productos actualiza la introducción y la frase final
   $("cProductos").addEventListener("input", actualizarIntro);
   $("cProductos").addEventListener("change", actualizarIntro);

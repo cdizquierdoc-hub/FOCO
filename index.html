@@ -134,10 +134,11 @@
 <body>
 <header class="hero">
   <div class="hero-in">
-    <div class="pill-logo"><img src="assets/logo_smc_blanco.png" alt="SMC"></div>
+    <div class="pill-logo"><img id="logoHero" src="assets/logo_smc_blanco.png" alt="SMC"></div>
     <div>
       <h1>FOCO 💡 Fichas Organizadas y Correo Optimizados</h1>
-      <p>Fichas comerciales SMC en 7 láminas. Sube el spec sheet y las fotos del producto, escribe las 4 características, genera la ficha y ajústala en el editor.</p>
+      <p>Fichas comerciales <span id="marcaTexto">SMC</span> en 7 láminas. Sube el spec sheet y las fotos del producto, escribe las 4 características, genera la ficha y ajústala en el editor.</p>
+      <label style="display:inline-flex;gap:8px;align-items:center;margin-top:12px;font-size:15px;font-weight:700">Marca <select id="marca" style="font:inherit;padding:6px 10px;border-radius:10px;border:0;color:#263A76"><option value="smc">SMC</option><option value="midea">Midea</option></select></label>
     </div>
   </div>
 </header>
