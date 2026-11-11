@@ -62,18 +62,18 @@ function laminaBeneficios(D, idx, fi) {
   E.push(txt({ texto: "BENEFICIOS:", x: 90, y: 262 - 28 * 0.95, w: 640, tam: 28, peso: 800, color: AZUL, alin: "center" }));
 
   // Detalle técnico de cada característica (aquí sí cabe más texto)
-  const X = 90, CW = 640, CH = 280, ys = [350, 700];
+  const X = 90, CW = 640, CH = 320, ys = [330, 720];
   D.beneficios.slice(idx * 2, idx * 2 + 2).forEach((b, i) => {
     const y = ys[i], cx = X + CW / 2;
     E.push(elem("rect", { x: X, y, w: CW, h: CH, radio: 46, relleno: BLANCO, borde: { color: AZUL, ancho: 3 } }));
     E.push(elem("circulo", { x: cx - 62, y: y - 62, w: 124, h: 124, relleno: AZUL }));
     E.push(elem("icono", { x: cx - 44, y: y - 44, w: 88, h: 88, clave: D.iconos[idx * 2 + i], color: BLANCO }));
-    const tit = fit(b.titulo, 800, CW - 110, 100, 40, 26, 1.1);
+    const tit = fit(b.titulo, 800, CW - 60, 100, 40, 26, 1.1);
     const yT = y + 62 + 30;
-    E.push(txt({ texto: b.titulo, x: X + 55, y: yT, w: CW - 110, tam: tit.tam, peso: 800, color: AZUL, alin: "center", lh: tit.lh }));
+    E.push(txt({ texto: b.titulo, x: X + 30, y: yT, w: CW - 60, tam: tit.tam, peso: 800, color: AZUL, alin: "center", lh: tit.lh }));
     const hT = tit.lineas.length * tit.tam * tit.lh;
-    const cu = fit(b.texto, 400, CW - 110, CH - (62 + 30 + hT + 30), 26, 17, 1.3);
-    E.push(txt({ texto: b.texto, x: X + 55, y: yT + hT + 14, w: CW - 110, tam: cu.tam, peso: 400, color: AZUL, alin: "center", lh: cu.lh }));
+    const cu = fit(b.texto, 400, CW - 60, CH - (62 + 30 + hT + 30), 26, 18, 1.3);
+    E.push(txt({ texto: b.texto, x: X + 30, y: yT + hT + 14, w: CW - 60, tam: cu.tam, peso: 400, color: AZUL, alin: "center", lh: cu.lh }));
   });
 
   // Cifras de características adicionales (no son las 4 principales), dos por lámina
