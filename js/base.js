@@ -327,7 +327,7 @@ function dibujarProducto(ctx, e, fotos) {
     // Sombra de contacto: el producto se apoya en una superficie
     const cx = e.x + e.w / 2, base = e.y + e.h;
     ctx.save();
-    ctx.translate(cx, base + 6);
+    ctx.translate(cx, base - e.h * 0.03 + 4);
     ctx.scale(1, 0.12);
     const g = ctx.createRadialGradient(0, 0, 0, 0, 0, e.w * 0.62);
     g.addColorStop(0, "rgba(0,0,0,0.65)");
