@@ -77,7 +77,8 @@ function marcaEnFicha(f) {
   const c = JSON.parse(JSON.stringify(f));
   if (c.portada) { c.portada.titulo = marcaEnTexto(c.portada.titulo); c.portada.texto = marcaEnTexto(c.portada.texto); }
   c.subtitulo_ficha = marcaEnTexto(c.subtitulo_ficha);
-  (c.beneficios || []).forEach((x) => { if (x) { x.titulo = marcaEnTexto(x.titulo); x.texto = marcaEnTexto(x.texto); } });
+  if (c.subtitulos_beneficios) c.subtitulos_beneficios = c.subtitulos_beneficios.map((t) => marcaEnTexto(t));
+  (c.beneficios || []).forEach((x) => { if (x) { x.titulo = marcaEnTexto(x.titulo); x.texto = marcaEnTexto(x.texto); x.corto = marcaEnTexto(x.corto); } });
   (c.despacho || []).forEach((x) => { if (x) x.valor = marcaEnTexto(x.valor); });
   (c.datos_destacados || []).forEach((x) => { if (x) x.etiqueta = marcaEnTexto(x.etiqueta); });
   return c;
@@ -123,7 +124,8 @@ async function generar() {
       inverter: !!ficha.inverter,
       subtitulo: ficha.subtitulo_ficha || "",
       portada: ficha.portada || FICHA_DEMO.portada,
-      beneficios: estado.feats.map((f, i) => ({ titulo: f.trim(), texto: (ficha.beneficios && ficha.beneficios[i] && ficha.beneficios[i].texto) || "" })),
+      beneficios: estado.feats.map((f, i) => ({ titulo: f.trim(), texto: (ficha.beneficios && ficha.beneficios[i] && ficha.beneficios[i].texto) || "", corto: (ficha.beneficios && ficha.beneficios[i] && ficha.beneficios[i].corto) || "" })),
+      subtitulos: ficha.subtitulos_beneficios || [],
       datos: datosExtra(ficha.datos_destacados, estado.feats),
       despacho: (ficha.despacho || []).slice(0, 15).map((it) => (/modelo|c[oó]digo/i.test(it.etiqueta || "") ? Object.assign({}, it, { valor: ficha.modelo }) : it)),
       ambientes: { portada, b1, b2, c4 },

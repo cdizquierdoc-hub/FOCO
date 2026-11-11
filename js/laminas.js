@@ -55,12 +55,14 @@ function laminaBeneficios(D, idx, fi) {
   const enc = encabezadoFicha(D);
   const e = fit(enc, 800, 680, 60, 40, 24, 1.2);
   E.push(txt({ texto: enc, x: 90, y: 110 - e.tam * 0.95, w: 680, tam: e.tam, peso: 800, color: AZUL, lh: 1.2 }));
-  const subT = D.subtitulo || "Tecnología, frescura y comodidad en un solo lugar.";
-  const sub = fit(subT, 600, 680, 40, 26, 18, 1.2);
-  E.push(txt({ texto: subT, x: 90, y: 150 - sub.tam * 0.95, w: 680, tam: sub.tam, peso: 600, color: AZUL, lh: 1.2 }));
+  // Subtítulo propio de estas dos características, que llena el espacio superior
+  const subT = (D.subtitulos && D.subtitulos[idx]) || D.subtitulo || "Tecnología, frescura y comodidad en un solo lugar.";
+  const sub = fit(subT, 600, 680, 100, 34, 20, 1.2);
+  E.push(txt({ texto: subT, x: 90, y: 150, w: 680, tam: sub.tam, peso: 600, color: AZUL, lh: 1.2 }));
   E.push(txt({ texto: "BENEFICIOS:", x: 90, y: 262 - 28 * 0.95, w: 640, tam: 28, peso: 800, color: AZUL, alin: "center" }));
 
-  const X = 90, CW = 640, CH = 270, ys = [360, 720];
+  // Detalle técnico de cada característica (aquí sí cabe más texto)
+  const X = 90, CW = 640, CH = 280, ys = [350, 700];
   D.beneficios.slice(idx * 2, idx * 2 + 2).forEach((b, i) => {
     const y = ys[i], cx = X + CW / 2;
     E.push(elem("rect", { x: X, y, w: CW, h: CH, radio: 46, relleno: BLANCO, borde: { color: AZUL, ancho: 3 } }));
@@ -70,7 +72,7 @@ function laminaBeneficios(D, idx, fi) {
     const yT = y + 62 + 30;
     E.push(txt({ texto: b.titulo, x: X + 55, y: yT, w: CW - 110, tam: tit.tam, peso: 800, color: AZUL, alin: "center", lh: tit.lh }));
     const hT = tit.lineas.length * tit.tam * tit.lh;
-    const cu = fit(b.texto, 400, CW - 110, CH - (62 + 30 + hT + 40), 30, 20, 1.3);
+    const cu = fit(b.texto, 400, CW - 110, CH - (62 + 30 + hT + 30), 26, 17, 1.3);
     E.push(txt({ texto: b.texto, x: X + 55, y: yT + hT + 14, w: CW - 110, tam: cu.tam, peso: 400, color: AZUL, alin: "center", lh: cu.lh }));
   });
 
@@ -108,8 +110,8 @@ function laminaCuatro(D, fi) {
     const yT = y + 56 + 26;
     E.push(txt({ texto: b.titulo, x: x + 30, y: yT, w: 280, tam: tt.tam, peso: 800, color: AZUL, alin: "center", lh: tt.lh }));
     const hT = tt.lineas.length * tt.tam * tt.lh;
-    const cu = fit(b.texto, 400, 280, CH - (56 + 26 + hT + 40), 26, 18, 1.3);
-    E.push(txt({ texto: b.texto, x: x + 30, y: yT + hT + 12, w: 280, tam: cu.tam, peso: 400, color: AZUL, alin: "center", lh: cu.lh }));
+    const cu = fit(b.corto || b.texto, 400, 280, CH - (56 + 26 + hT + 40), 26, 18, 1.3);
+    E.push(txt({ texto: b.corto || b.texto, x: x + 30, y: yT + hT + 12, w: 280, tam: cu.tam, peso: 400, color: AZUL, alin: "center", lh: cu.lh }));
   });
   return { nombre: NOMBRES_LAMINA[3], fondo: BLANCO, elementos: E };
 }

@@ -33,7 +33,8 @@ Lee el spec sheet y responde SOLO con un objeto JSON válido (sin texto extra, s
     "beneficios_1_2": "ambiente SIN producto para las características 1 y 2",
     "beneficios_3_4": "ambiente SIN producto para las características 3 y 4"
   },
-  "beneficios": [ { "titulo": "...", "texto": "2 frases de 15 a 25 palabras: qué es y qué gana el cliente" } ],
+  "subtitulos_beneficios": ["2 frases que resumen las características 1 y 2 juntas y su beneficio para el cliente", "2 frases que resumen las características 3 y 4 juntas y su beneficio para el cliente"],
+  "beneficios": [ { "titulo": "...", "corto": "una frase de máximo 10 palabras que resume la característica", "texto": "3 o 4 frases con detalle técnico: qué componente o tecnología lo hace posible, cómo funciona y qué gana el cliente" } ],
   "datos_destacados": [ { "valor": "43 dB", "etiqueta": "Nivel de ruido" } ],
   "despacho": [ { "etiqueta": "...", "valor": "...", "icono": "..." } ]
 }
@@ -43,6 +44,8 @@ Reglas:
 - Las características que te indico SÍ las tiene el producto. Nunca escribas que el producto no cuenta con ellas, ni que no las tiene, ni frases de contraste como "pero sigue siendo". Escribe siempre en positivo: qué hace la característica y qué gana el cliente.
 - Si el spec sheet no detalla una característica, explica su beneficio general en palabras sencillas, sin inventar cifras ni datos técnicos.
 - "modelo": {REGLA_CODIGO}.
+- El detalle técnico va en "texto": usa datos concretos del spec sheet (medidas, potencia, niveles, capacidad, materiales, tecnología) cuando existan. "corto" es solo una frase para la lámina de las 4 características.
+- "subtitulos_beneficios" hablan solo de las 2 características de cada lámina, con un tono de venta y sin repetir el título.
 - "beneficios" debe tener exactamente 4 elementos, en el MISMO orden de las características que te indican abajo. El título es la característica (puedes pulirla), y el texto describe el beneficio para el cliente usando solo datos del spec sheet.
 - "escenas": el ambiente debe corresponder a la categoría. Refrigeradora o congelador: interior de cocina moderna de noche, con encimera de mármol oscuro, gabinetes de madera y luz LED cálida bajo los gabinetes. Lavadora o secadora: lavandería moderna con iluminación cálida. Aire acondicionado: sala o dormitorio. Describe solo el ambiente interior, nunca el producto, y nunca calles, exteriores ni ciudades.
 - "datos_destacados": exactamente 4 elementos que sean características ADICIONALES, distintas de las 4 principales (ej. capacidad, potencia, nivel de ruido, dimensiones, número de niveles). "valor" corto: una cifra o una palabra. Nunca "Sí" ni "No". Si el spec sheet no alcanza, usa menos elementos.
