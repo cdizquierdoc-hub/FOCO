@@ -9,12 +9,14 @@ const NOMBRES_LAMINA = ["Portada", "Beneficios 1 y 2", "Beneficios 3 y 4", "Las 
 /* Datos de referencia (SMCRF14TMGO) para el modo demo */
 const FICHA_DEMO = {
   modelo: "SMCRF14TMGO",
+  tipo: "refrigeradora",
+  inverter: true,
   categoria: "refrigeradora",
   subtitulo_ficha: "Tecnología, frescura y comodidad en un solo lugar.",
   portada: { titulo: "REFRIGERACIÓN SMC", texto: "La nueva SMCRF14TMGO combina diseño moderno, gran capacidad y funciones pensadas para hacer tu día a día más práctico." },
   beneficios: [
     { titulo: "Panel digital exterior", texto: "Mayor control y comodidad al alcance de tu mano." },
-    { titulo: "Tecnología Inverter", texto: "Eficiencia y rendimiento para todos los días." },
+    { titulo: "Ahorro de energía", texto: "Eficiencia y rendimiento para todos los días." },
     { titulo: "Dispensador de agua", texto: "Practicidad para disfrutar más tu hogar." },
     { titulo: "Gran capacidad", texto: "Más espacio para organizar tus alimentos." }
   ],
@@ -35,14 +37,14 @@ const FICHA_DEMO = {
     { etiqueta: "Unidades por contenedor 40HQ", valor: "2 en tránsito\n3 en bodega", icono: "contenedor" },
     { etiqueta: "Potencia", valor: "120 W", icono: "potencia" }
   ],
-  datos_destacados: [null, null, null, { valor: "434 L", etiqueta: "Capacidad neta" }],
+  datos_destacados: [{ valor: "43 dB", etiqueta: "Nivel de ruido" }, { valor: "302 L", etiqueta: "Espacio refrigerador" }, { valor: "107 L", etiqueta: "Espacio congelador" }, { valor: "Clase A", etiqueta: "Eficiencia" }],
   escenas: {
     portada: "interior de cocina moderna de noche, con gabinetes de madera oscura, encimera de mármol y luz LED cálida bajo los gabinetes.",
     beneficios_1_2: "interior de cocina moderna de noche con encimera de mármol oscuro, grifo de bronce y estantes iluminados con plantas.",
     beneficios_3_4: "interior de cocina moderna con isla de madera oscura, luz LED cálida y repisas con frascos y utensilios de cocina."
   }
 };
-const CARACTERISTICAS_DEMO = ["Panel digital exterior", "Tecnología Inverter", "Dispensador de agua", "Gran capacidad"];
+const CARACTERISTICAS_DEMO = ["Panel digital exterior", "Ahorro de energía", "Dispensador de agua", "Gran capacidad"];
 
 /* Iconos de línea (64×64) */
 const ICONOS = {
@@ -83,28 +85,53 @@ const ICONOS = {
   star: '<path d="M32 8l7 16 17 2-13 12 4 17-15-9-15 9 4-17L8 26l17-2z"/>'
 };
 const ICONO_DESPACHO = { tag: "tag", modelo: "tech", qr: "tech", tipo: "box", tech: "inverter", energia: "energy", capacidad: "expand", medidas: "ruler", peso: "scale", caja: "box", voltaje: "plug", refrigerante: "wind", contenedor: "container", potencia: "energy" };
-const REGLAS_ICONO = [
-  [/panel|digital|t[aá]ctil|control|pantalla/i, "touch"],
-  [/inverter|tecnolog/i, "inverter"],
-  [/agua|dispensad|hidrat/i, "drop"],
-  [/capacidad|espacio|gran|volumen|almacen|distribu/i, "expand"],
-  [/silencio|ruido|sonid/i, "volume"],
-  [/congela|fr[ií]o|enfri|nofrost|temperatura|fresc/i, "snow"],
-  [/energ|eficien|clase/i, "energy"],
-  [/garant|respaldo|seguridad|protec/i, "shield"],
-  [/peso|kg/i, "scale"],
-  [/medid|tama|alto|ancho|profund/i, "ruler"],
-  [/volt|frecuencia|hz/i, "plug"],
-  [/refrig|gas|r600/i, "wind"],
-  [/potencia|watt/i, "energy"],
-  [/contenedor|unidad|40hq/i, "container"],
-  [/caja/i, "box"],
-  [/marca|modelo|c[oó]digo/i, "tag"]
+/* Icono según la palabra clave. Cada característica toma el primer icono de su lista que aún no se use en la lámina o el correo */
+const REGLAS_ICONOS = [
+  [/cancel/i, ["power", "toaster"]],
+  [/apagad|autoapag|desconect/i, ["timer", "power"]],
+  [/extra[ií]ble|desmont|removib/i, ["eject"]],
+  [/sanduch|s[aá]ndwich|\bpanes?\b|wafle|waffle/i, ["sandwich", "waffle"]],
+  [/panini|prensa|parrilla|plancha|grill/i, ["grill"]],
+  [/tostad|rebanad/i, ["toaster"]],
+  [/antiadher|anti-adher|no se pega|no adher/i, ["pan"]],
+  [/atasc/i, ["gear"]],
+  [/temporiz|tiempo|minuto|reloj|programa/i, ["timer"]],
+  [/vapor/i, ["steam"]],
+  [/olla|cocci|cocin|horne/i, ["pot"]],
+  [/licu|batid/i, ["blender"]],
+  [/caf[eé]/i, ["coffee"]],
+  [/\bluz|\bled\b|indicador|lumin/i, ["bulb"]],
+  [/potencia|watt|\d\s?w\b/i, ["energy", "power"]],
+  [/bandeja|goteo|recolect|migaja/i, ["tray", "sparkle"]],
+  [/limpi|lavable/i, ["sparkle"]],
+  [/niveles?\b/i, ["levels"]],
+  [/temperatura|termostat/i, ["thermo", "touch"]],
+  [/digital|pantalla|display|t[aá]ctil|panel/i, ["touch"]],
+  [/inverter|tecnolog|autom[aá]tic/i, ["inverter", "tech"]],
+  [/silencio|ruido|sonid|mudo/i, ["volume"]],
+  [/agua|dispens|hidrat/i, ["drop"]],
+  [/capacidad|espacio|gran|volumen|litro|almacen/i, ["expand", "container"]],
+  [/fr[ií]o|enfri|congela|nofrost|fresc|temperatura/i, ["snow"]],
+  [/energ|eficien|clase|ahorro/i, ["energy"]],
+  [/garant|respaldo|seguridad|protec/i, ["shield"]],
+  [/peso|kg\b/i, ["scale"]],
+  [/medid|tama|alto|ancho|profund|dimension/i, ["ruler"]],
+  [/volt|frecuencia|hz/i, ["plug"]],
+  [/refrig|gas/i, ["wind"]],
+  [/caja|empaque|contenedor|unidades/i, ["box", "container"]]
 ];
-function claveIcono(texto) {
-  for (const [re, clave] of REGLAS_ICONO) if (re.test(texto || "")) return clave;
-  return "star";
+const POOL_ICONOS = ["tag", "tech", "container", "box", "shield", "expand", "touch", "energy", "inverter", "drop", "volume", "snow", "thermo", "wind", "plug", "scale", "ruler", "sparkle", "tray", "bulb", "power", "levels", "timer", "pot", "blender", "coffee", "steam", "gear", "waffle", "grill", "sandwich", "eject", "pan", "toaster"];
+function asignarIconos(textos) {
+  const usados = new Set();
+  return textos.map((t) => {
+    const regla = REGLAS_ICONOS.find(([re]) => re.test(t || ""));
+    let k = regla ? (regla[1].find((x) => !usados.has(x)) || regla[1][0]) : null;
+    if (!k) k = POOL_ICONOS.find((x) => !usados.has(x)) || "tag";
+    usados.add(k);
+    return k;
+  });
 }
+function claveIcono(texto) { return asignarIconos([texto])[0]; }
 const iconosListos = {};
 async function precargarIconos() {
   const tareas = [];

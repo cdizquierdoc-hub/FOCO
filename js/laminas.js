@@ -21,6 +21,11 @@ function ambienteSeguro(ficha, descripcion, indice) {
   return descripcion;
 }
 
+/* Encabezado: tipo del producto en mayúsculas + código SMC */
+function encabezadoFicha(D) {
+  return (D.tipo || "producto").toUpperCase() + " " + D.modelo;
+}
+
 function laminaPortada(D, fi) {
   const E = [imagenEl(D.ambientes.portada, { fondo: true })];
   const tamT = Math.min(
@@ -47,8 +52,9 @@ function laminaBeneficios(D, idx, fi) {
   const E = [panelChevron(amb)];
   E.push(productoEl(fi, 860, 1600, 1010));
 
-  const enc = fit("REFRIGERADORA SMC " + D.modelo, 800, 680, 60, 40, 24, 1.2);
-  E.push(txt({ texto: "REFRIGERADORA SMC " + D.modelo, x: 90, y: 110 - enc.tam * 0.95, w: 680, tam: enc.tam, peso: 800, color: AZUL, lh: 1.2 }));
+  const enc = encabezadoFicha(D);
+  const e = fit(enc, 800, 680, 60, 40, 24, 1.2);
+  E.push(txt({ texto: enc, x: 90, y: 110 - e.tam * 0.95, w: 680, tam: e.tam, peso: 800, color: AZUL, lh: 1.2 }));
   const subT = D.subtitulo || "Tecnología, frescura y comodidad en un solo lugar.";
   const sub = fit(subT, 600, 680, 40, 26, 18, 1.2);
   E.push(txt({ texto: subT, x: 90, y: 150 - sub.tam * 0.95, w: 680, tam: sub.tam, peso: 600, color: AZUL, lh: 1.2 }));
@@ -59,7 +65,7 @@ function laminaBeneficios(D, idx, fi) {
     const y = ys[i], cx = X + CW / 2;
     E.push(elem("rect", { x: X, y, w: CW, h: CH, radio: 46, relleno: BLANCO, borde: { color: AZUL, ancho: 3 } }));
     E.push(elem("circulo", { x: cx - 62, y: y - 62, w: 124, h: 124, relleno: AZUL }));
-    E.push(elem("icono", { x: cx - 44, y: y - 44, w: 88, h: 88, clave: claveIcono(b.titulo), color: BLANCO }));
+    E.push(elem("icono", { x: cx - 44, y: y - 44, w: 88, h: 88, clave: D.iconos[idx * 2 + i], color: BLANCO }));
     const tit = fit(b.titulo, 800, CW - 110, 100, 40, 26, 1.1);
     const yT = y + 62 + 30;
     E.push(txt({ texto: b.titulo, x: X + 55, y: yT, w: CW - 110, tam: tit.tam, peso: 800, color: AZUL, alin: "center", lh: tit.lh }));
@@ -68,7 +74,7 @@ function laminaBeneficios(D, idx, fi) {
     E.push(txt({ texto: b.texto, x: X + 55, y: yT + hT + 14, w: CW - 110, tam: cu.tam, peso: 400, color: AZUL, alin: "center", lh: cu.lh }));
   });
 
-  // Burbujas con cifra clave (una por beneficio, si el spec sheet la trae)
+  // Cifras de características adicionales (no son las 4 principales), dos por lámina
   [0, 1].forEach((i) => {
     const dato = D.datos[idx * 2 + i];
     if (!dato || !dato.valor) return;
@@ -89,15 +95,15 @@ function laminaCuatro(D, fi) {
   const tit = "CARACTERÍSTICAS PRINCIPALES";
   const t = fit(tit, 800, 700, 80, 64, 40, 1.1);
   E.push(txt({ texto: tit, x: 90, y: 90, w: 700, tam: t.tam, peso: 800, color: AZUL, lh: 1.1 }));
-  const s = fit("SMC " + D.modelo, 600, 700, 40, 28, 20, 1.2);
-  E.push(txt({ texto: "SMC " + D.modelo, x: 90, y: 90 + t.tam * 1.1 + 6, w: 700, tam: s.tam, peso: 600, color: AZUL, lh: 1.2 }));
+  const s = fit(D.modelo, 600, 700, 40, 28, 20, 1.2);
+  E.push(txt({ texto: D.modelo, x: 90, y: 90 + t.tam * 1.1 + 6, w: 700, tam: s.tam, peso: 600, color: AZUL, lh: 1.2 }));
 
   const cols = [90, 460], filas = [290, 650], CW = 340, CH = 280;
   D.beneficios.slice(0, 4).forEach((b, i) => {
     const x = cols[i % 2], y = filas[Math.floor(i / 2)], cx = x + CW / 2;
     E.push(elem("rect", { x, y, w: CW, h: CH, radio: 40, relleno: BLANCO, borde: { color: AZUL, ancho: 3 } }));
     E.push(elem("circulo", { x: cx - 56, y: y - 56, w: 112, h: 112, relleno: AZUL }));
-    E.push(elem("icono", { x: cx - 36, y: y - 36, w: 72, h: 72, clave: claveIcono(b.titulo), color: BLANCO }));
+    E.push(elem("icono", { x: cx - 36, y: y - 36, w: 72, h: 72, clave: D.iconos[i], color: BLANCO }));
     const tt = fit(b.titulo, 800, 280, 90, 34, 20, 1.1);
     const yT = y + 56 + 26;
     E.push(txt({ texto: b.titulo, x: x + 30, y: yT, w: 280, tam: tt.tam, peso: 800, color: AZUL, alin: "center", lh: tt.lh }));
@@ -125,35 +131,43 @@ function laminaDespacho(D, fi) {
   E.push(txt({ texto: p1, x: 90, y: 170 - tam * 0.95, w: anchoA + 10, tam, peso: 400, color: AZUL }));
   E.push(txt({ texto: p2, x: 90 + anchoA, y: 170 - tam * 0.95, w: anchoB + 10, tam, peso: 800, color: AZUL }));
 
-  // Especificaciones: 3 columnas de 5 filas
-  const columnasX = [70, 420, 770], filaY0 = 290, altoFila = 150;
-  D.despacho.slice(0, 15).forEach((item, i) => {
-    const x = columnasX[Math.floor(i / 5)], y = filaY0 + (i % 5) * altoFila;
-    E.push(elem("icono", { x, y: y + 2, w: 62, h: 62, clave: ICONO_DESPACHO[item.icono] || claveIcono(item.etiqueta), color: AZUL }));
-    const et = fit(item.etiqueta, 800, 240, 70, 28, 18, 1.12);
-    E.push(txt({ texto: item.etiqueta, x: x + 84, y: y + 6, w: 240, tam: et.tam, peso: 800, color: AZUL, lh: et.lh }));
-    const altoE = et.lineas.length * et.tam * et.lh;
-    const va = fit(item.valor, 400, 240, 80, 24, 17, 1.2);
-    E.push(txt({ texto: item.valor, x: x + 84, y: y + 6 + altoE + 4, w: 240, tam: va.tam, peso: 400, color: AZUL, lh: va.lh }));
+  // Especificaciones en 3 columnas. Con pocos datos, cada fila es más alta y la letra más grande (sin espacios vacíos)
+  const items = D.despacho.slice(0, 15);
+  const porCol = Math.max(1, Math.ceil(items.length / 3));
+  const columnasX = [60, 395, 730];
+  const yIni = 290, yFin = 1010, alto = (yFin - yIni) / porCol;
+  const escala = Math.max(0.95, Math.min(1.6, alto / 150));
+  const ic = Math.round(62 * escala), anchoT = 320 - ic - 20;
+  items.forEach((item, i) => {
+    const x = columnasX[Math.floor(i / porCol)], yFila = yIni + (i % porCol) * alto;
+    const et = fit(item.etiqueta, 800, anchoT, alto * 0.45, Math.round(28 * escala), 18, 1.12);
+    const va = fit(item.valor, 400, anchoT, alto * 0.45, Math.round(24 * escala), 16, 1.2);
+    const altoE = et.lineas.length * et.tam * et.lh, altoV = va.lineas.length * va.tam * va.lh;
+    const bloque = Math.max(ic, altoE + 6 + altoV);
+    const y0 = yFila + (alto - bloque) / 2;
+    E.push(elem("icono", { x, y: y0 + (bloque - ic) / 2, w: ic, h: ic, clave: ICONO_DESPACHO[item.icono] || claveIcono(item.etiqueta), color: AZUL }));
+    const yT = y0 + (bloque - (altoE + 6 + altoV)) / 2;
+    E.push(txt({ texto: item.etiqueta, x: x + ic + 20, y: yT, w: anchoT, tam: et.tam, peso: 800, color: AZUL, lh: et.lh }));
+    E.push(txt({ texto: item.valor, x: x + ic + 20, y: yT + altoE + 6, w: anchoT, tam: va.tam, peso: 400, color: AZUL, lh: va.lh }));
   });
 
-  E.push(productoEl(fi, 860, 1600, 1000));
+  E.push(productoEl(fi, 760, 1760, 1000));
 
-  // Pastillas de garantía sobrepuestas a la refrigeradora
-  [
-    { y: 470, n: "1 AÑO", t: ["de garantía en todo el producto", "Repuestos + mano de obra."] },
-    { y: 760, n: "10 AÑOS", t: ["de garantía total", "en el compresor Inverter."] }
-  ].forEach((p) => {
-    E.push(elem("rect", { x: 1160, y: p.y, w: 740, h: 160, radio: 80, sombra: true, relleno: { lineal: [0, 0, 1, 0], stops: [[0, MARINO], [1, "#3F5FB8"]] } }));
-    let tamN = 80;
+  // Píldoras de garantía, más pequeñas para no tapar el producto. La de 10 años solo si es inverter
+  const pastillas = [{ y: 420, n: "1 AÑO", t: ["de garantía en todo el producto", "Repuestos + mano de obra."] }];
+  if (D.inverter) pastillas.push({ y: 680, n: "10 AÑOS", t: ["de garantía total", "en el compresor."] });
+  pastillas.forEach((p) => {
+    const px = 1130, pw = 480, ph = 124;
+    E.push(elem("rect", { x: px, y: p.y, w: pw, h: ph, radio: ph / 2, sombra: true, relleno: { lineal: [0, 0, 1, 0], stops: [[0, MARINO], [1, "#3F5FB8"]] } }));
+    let tamN = 56;
     fuente(MEDIR, 800, tamN);
-    while (MEDIR.measureText(p.n).width > 740 - 80 - 24 - 300 && tamN > 50) { tamN -= 2; fuente(MEDIR, 800, tamN); }
+    while (MEDIR.measureText(p.n).width > 190 && tamN > 36) { tamN -= 2; fuente(MEDIR, 800, tamN); }
     const anchoN = MEDIR.measureText(p.n).width;
-    E.push(txt({ texto: p.n, x: 1200, y: p.y + 80 - tamN * 0.6, w: anchoN + 20, tam: tamN, peso: 800, lh: 1.1 }));
-    const xT = 1200 + anchoN + 24, maxT = 1160 + 740 - 36 - xT;
-    const det = fit(p.t.join("\n"), 400, maxT, 130, 30, 18, 1.15);
+    E.push(txt({ texto: p.n, x: px + 26, y: p.y + ph / 2 - tamN * 0.6, w: anchoN + 20, tam: tamN, peso: 800, color: BLANCO, lh: 1.1 }));
+    const xT = px + 26 + anchoN + 20, maxT = px + pw - 26 - xT;
+    const det = fit(p.t.join("\n"), 400, maxT, ph - 20, 22, 16, 1.15);
     const altoT = det.lineas.length * det.tam * det.lh;
-    E.push(txt({ texto: p.t.join("\n"), x: xT, y: p.y + (160 - altoT) / 2 - 2, w: maxT, tam: det.tam, peso: 400, lh: det.lh }));
+    E.push(txt({ texto: p.t.join("\n"), x: xT, y: p.y + (ph - altoT) / 2, w: maxT, tam: det.tam, peso: 400, color: BLANCO, lh: det.lh }));
   });
   return { nombre: NOMBRES_LAMINA[4], fondo: BLANCO, elementos: E };
 }
@@ -165,6 +179,8 @@ function laminaFija(indice, img) {
 function construirLaminas(D) {
   const n = estado.productos.length;
   const f = (i) => i % n;
+  // Un icono distinto para cada una de las 4 características principales
+  D.iconos = asignarIconos(D.beneficios.map((b) => b.titulo));
   return [
     laminaPortada(D, f(0)),
     laminaCuatro(D, f(0)),

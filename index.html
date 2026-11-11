@@ -83,7 +83,7 @@
   .alerta:empty { display:none; }
 
   /* Editor */
-  .editor { display:grid; grid-template-columns:160px minmax(0,1fr) 280px; gap:16px; align-items:start; }
+  .editor { display:grid; grid-template-columns:150px minmax(0,1fr) 250px; gap:16px; align-items:start; }
   .miniaturas { display:flex; flex-direction:column; gap:10px; max-height:760px; overflow:auto; padding:2px; }
   .mini-item { border:2px solid var(--borde); border-radius:12px; padding:5px; background:#fff; cursor:pointer; font:inherit; font-size:11px; font-weight:700; color:var(--gris); text-align:left; }
   .mini-item.act { border-color:var(--azul); box-shadow:0 0 0 3px rgba(71,169,228,.2); color:var(--marino); }
@@ -92,6 +92,9 @@
   #lienzo { width:100%; height:auto; display:block; border-radius:10px; background:#fff; touch-action:none; box-shadow:0 6px 18px rgba(23,38,79,.12); }
   .props { background:#fff; border:1px solid var(--borde); border-radius:18px; padding:16px; display:grid; gap:12px; align-content:start; }
   .props h3 { margin:0; font-size:14px; color:var(--marino); }
+  .editor > *, .props { min-width:0; }
+  .props { overflow:hidden; }
+  .props input, .props select, .props textarea { max-width:100%; min-width:0; }
   .props label { font-size:12px; font-weight:700; color:var(--gris); display:grid; gap:6px; }
   .props input[type=number], .props input[type=checkbox], .props textarea, .props select { font:inherit; font-size:14px; color:var(--texto); }
   .props input[type=number], .props textarea, .props select { padding:9px 11px; border:1.5px solid var(--borde); border-radius:12px; width:100%; background:#fbfdff; }

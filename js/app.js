@@ -60,6 +60,18 @@ async function obtenerAmbiente(tipo, descripcion) {
   }
 }
 
+/* Características extra (no son las 4 principales), sin "Sí/No" ni repeticiones */
+function datosExtra(lista, principales) {
+  const norm = (t) => String(t || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  const palabrasPrincipales = principales.join(" ").split(/\s+/).map(norm).filter((w) => w.length > 3);
+  return (lista || []).filter((d) => {
+    if (!d || !String(d.valor || "").trim()) return false;
+    if (/^(s[ií]|no)$/i.test(String(d.valor).trim())) return false;
+    const et = norm(d.etiqueta);
+    return !palabrasPrincipales.some((w) => et.includes(w));
+  }).slice(0, 4);
+}
+
 async function generar() {
   error(""); $("bGen").disabled = true; $("barra").classList.add("on");
   try {
@@ -85,11 +97,13 @@ async function generar() {
     log("Armando las 7 láminas...");
     const D = {
       modelo: ficha.modelo,
+      tipo: ficha.tipo || ficha.categoria || "",
+      inverter: !!ficha.inverter,
       subtitulo: ficha.subtitulo_ficha || "",
       portada: ficha.portada || FICHA_DEMO.portada,
       beneficios: estado.feats.map((f, i) => ({ titulo: f.trim(), texto: (ficha.beneficios && ficha.beneficios[i] && ficha.beneficios[i].texto) || "" })),
-      datos: ficha.datos_destacados || [],
-      despacho: ficha.despacho || [],
+      datos: datosExtra(ficha.datos_destacados, estado.feats),
+      despacho: (ficha.despacho || []).slice(0, 15).map((it) => (/modelo|c[oó]digo/i.test(it.etiqueta || "") ? Object.assign({}, it, { valor: ficha.modelo }) : it)),
       ambientes: { portada, b1, b2, c4 },
       logo: estado.logo
     };

@@ -10,10 +10,12 @@ const MODELO_TEXTO_GRATIS = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
 const SOLO_EXCEL = "Por ahora la lectura gratuita solo funciona con Excel o CSV. Sube el Excel del spec sheet o escribe las 4 características a mano.";
 
 const PROMPT_EXTRAER = `Eres un redactor técnico de Cresa Retail para fichas comerciales de electrodomésticos SMC.
-Lee el spec sheet adjunto y responde SOLO con un objeto JSON válido (sin texto extra, sin markdown) con esta forma:
+Lee el spec sheet y responde SOLO con un objeto JSON válido (sin texto extra, sin markdown) con esta forma:
 {
-  "modelo": "código exacto del modelo",
-  "subtitulo_ficha": "frase corta de una línea sobre el producto",
+  "modelo": "solo el código que empieza con SMC, por ejemplo SMCETO750N",
+  "tipo": "nombre corto del producto en minúscula, por ejemplo tostadora 2 panes",
+  "inverter": true o false (true solo si el spec sheet indica tecnología inverter),
+  "subtitulo_ficha": "frase corta en español sobre el producto",
   "categoria": "tipo de producto: refrigeradora, lavadora, cocina, aire acondicionado, etc.",
   "portada": { "titulo": "REFRIGERACIÓN SMC", "texto": "1 o 2 frases comerciales para la portada" },
   "escenas": {
@@ -21,24 +23,26 @@ Lee el spec sheet adjunto y responde SOLO con un objeto JSON válido (sin texto 
     "beneficios_1_2": "ambiente SIN producto para las características 1 y 2",
     "beneficios_3_4": "ambiente SIN producto para las características 3 y 4"
   },
-  "beneficios": [ { "titulo": "...", "texto": "1 o 2 frases" } ],
+  "beneficios": [ { "titulo": "...", "texto": "2 frases de 15 a 25 palabras: qué es y qué gana el cliente" } ],
   "datos_destacados": [ { "valor": "43 dB", "etiqueta": "Nivel de ruido" } ],
   "despacho": [ { "etiqueta": "...", "valor": "...", "icono": "..." } ]
 }
 Reglas:
-- "beneficios" debe tener exactamente 4 elementos, en el MISMO orden de las características que te indican abajo. El título es la característica (puedes pulirla), y el texto debe describir beneficio al cliente usando solo datos del spec sheet.
+- Escribe todo en español. No uses palabras en inglés (por ejemplo "housing", "cool-touch" o "inverter" fuera del campo inverter). Si el spec sheet trae un término en inglés, dilo con palabras simples en español.
+- Explica cada beneficio con palabras que entienda cualquier cliente, sin jerga técnica sin explicar.
+- "modelo" es solo el código que empieza con SMC. No uses el código del proveedor (ej. FT2010A-T).
+- "beneficios" debe tener exactamente 4 elementos, en el MISMO orden de las características que te indican abajo. El título es la característica (puedes pulirla), y el texto describe el beneficio para el cliente usando solo datos del spec sheet.
 - "escenas": el ambiente debe corresponder a la categoría. Refrigeradora o congelador: interior de cocina moderna de noche, con encimera de mármol oscuro, gabinetes de madera y luz LED cálida bajo los gabinetes. Lavadora o secadora: lavandería moderna con iluminación cálida. Aire acondicionado: sala o dormitorio. Describe solo el ambiente interior, nunca el producto, y nunca calles, exteriores ni ciudades.
-- "datos_destacados" tiene exactamente 4 elementos (uno por característica, en el mismo orden). Pon una cifra clave del spec sheet relacionada con esa característica (ej. nivel de ruido, capacidad, consumo) o null si no hay ninguna.
-- "despacho" son los datos logísticos y técnicos del spec sheet (marca, modelo, código, tipo, tecnología, eficiencia, capacidad neta, distribución de capacidad, medidas del producto, peso neto, medidas de caja, peso bruto, voltaje/frecuencia, refrigerante, unidades por contenedor, potencia). Máximo 15 elementos. Combina peso neto y bruto en una sola línea si hace falta. "valor" puede tener saltos de línea con \\n.
+- "datos_destacados": exactamente 4 elementos que sean características ADICIONALES, distintas de las 4 principales (ej. capacidad, potencia, nivel de ruido, dimensiones, número de niveles). "valor" corto: una cifra o una palabra. Nunca "Sí" ni "No". Si el spec sheet no alcanza, usa menos elementos.
+- "despacho" son los datos logísticos y técnicos del spec sheet (marca, modelo, tipo, tecnología, eficiencia, capacidad neta, distribución de capacidad, medidas del producto, peso neto, medidas de caja, peso bruto, voltaje/frecuencia, refrigerante, unidades por contenedor, potencia). Máximo 15 elementos. Combina peso neto y bruto en una sola línea si hace falta. "valor" puede tener saltos de línea con \\n.
 - "icono" debe ser uno de: tag, modelo, qr, tipo, tech, energia, capacidad, medidas, peso, caja, voltaje, refrigerante, contenedor, potencia, default.
 - No inventes datos que no estén en el spec sheet. Si un dato no existe, omítelo.
 
 Características principales que el usuario definió (en este orden):`;
 
-// Sugiere las 4 características principales a partir del spec sheet (el usuario puede editarlas)
 const PROMPT_SUGERIR = `Lee el spec sheet y responde SOLO con JSON válido: {"caracteristicas": ["...", "...", "...", "..."]}.
-Propón las 4 características principales más vendedoras del producto, en español, con títulos cortos de 2 a 4 palabras
-(ej. "Panel digital exterior", "Tecnología Inverter"). Usa solo datos del spec sheet.`;
+Propón las 4 características principales más vendedoras del producto, en español (sin palabras en inglés), con títulos cortos de 2 a 4 palabras
+(ej. "Panel digital exterior", "Apagado automático"). Usa solo datos del spec sheet.`;
 
 const ORIGENES_PERMITIDOS = [
   "https://cdizquierdoc.github.io",
@@ -104,6 +108,12 @@ async function textoIA(env, instruccion, specTexto, maxTokens) {
   return typeof salida === "string" ? salida : JSON.stringify(salida || "");
 }
 
+// Deja solo el código que empieza con SMC (el otro es del proveedor)
+function codigoSMC(t) {
+  const m = String(t || "").match(/SMC[A-Z0-9-]+/i);
+  return m ? m[0].toUpperCase() : String(t || "").trim();
+}
+
 // Toma el primer objeto {...} de la respuesta, aunque venga con texto alrededor
 function extraerJson(texto) {
   const ini = texto.indexOf("{"), fin = texto.lastIndexOf("}");
@@ -120,6 +130,7 @@ async function extraer(body, env, cors) {
   const lista = caracteristicas.map((c, i) => `${i + 1}) ${String(c).trim()}`).join("\n");
   const texto = await textoIA(env, PROMPT_EXTRAER + "\n" + lista, texto_spec, 2500);
   const ficha = extraerJson(texto);
+  if (ficha) { ficha.modelo = codigoSMC(ficha.modelo); ficha.inverter = ficha.inverter === true; }
   if (!ficha) return json({ error: "La IA gratuita no devolvió una ficha válida. Respuesta: " + texto.slice(0, 200) }, 502, cors);
   return json({ ficha }, 200, cors);
 }
@@ -138,11 +149,12 @@ async function sugerir(body, env, cors) {
 // Datos del producto para el correo de bienvenida: código, categoría, 4 características y texto de presentación
 const CATEGORIAS_DATOS = ["Refrigeradora", "Congelador", "Minibar", "Lavadora", "Cocina", "Aire acondicionado", "Minidomésticos", "Otro"];
 const PROMPT_DATOS = `Lee el spec sheet y responde SOLO con JSON válido con esta forma:
-{"modelo": "código exacto del modelo, por ejemplo SMCRF14TMGO",
+{"modelo": "solo el código que empieza con SMC, por ejemplo SMCRF14TMGO (no el código del proveedor)",
+ "inverter": true o false,
  "categoria": "una sola de: Refrigeradora, Congelador, Minibar, Lavadora, Cocina, Aire acondicionado, Minidomésticos, Otro",
  "tipo": "nombre corto y específico del producto en minúscula, por ejemplo sanduchera 2 panes, tostadora, prensa tipo panini, refrigeradora",
  "caracteristicas": ["4 características principales de venta, de 2 a 4 palabras cada una"]}
-Reglas: usa solo datos del spec sheet. El tipo va en minúscula y sin el código del modelo.`;
+Reglas: usa solo datos del spec sheet. Escribe en español, sin palabras en inglés. El tipo va en minúscula y sin el código del modelo.`;
 
 async function datos(body, env, cors) {
   const { texto_spec } = body;
@@ -154,7 +166,8 @@ async function datos(body, env, cors) {
   const categoria = CATEGORIAS_DATOS.find((c) => cat.toLowerCase().includes(c.toLowerCase().split(" ")[0])) || "Otro";
   const caracteristicas = (Array.isArray(parsed.caracteristicas) ? parsed.caracteristicas : []).slice(0, 4).map((c) => String(c));
   return json({
-    modelo: String(parsed.modelo || "").trim(),
+    modelo: codigoSMC(parsed.modelo),
+    inverter: parsed.inverter === true,
     categoria,
     caracteristicas,
     tipo: String(parsed.tipo || "").trim(),

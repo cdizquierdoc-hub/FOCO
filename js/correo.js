@@ -37,43 +37,6 @@ function fraseFinalCorreo(categoria) {
 const CIERRE_COMODIDAD = "para brindarte mayor comodidad en casa.";
 const CIERRE_COMIDAS = "para hacer tus comidas más fáciles y prácticas.";
 
-/* Icono según la palabra clave de cada característica: se usa el primero de la lista que aún no esté en el correo */
-const REGLAS_CORREO = [
-  [/cancel/i, ["power", "toaster"]],
-  [/apagad|autoapag|desconect/i, ["timer", "power"]],
-  [/extra[ií]ble|desmont|removib/i, ["eject"]],
-  [/sanduch|s[aá]ndwich|\bpanes?\b|wafle|waffle/i, ["sandwich", "waffle"]],
-  [/panini|prensa|parrilla|plancha|grill/i, ["grill"]],
-  [/tostad/i, ["toaster"]],
-  [/antiadher|anti-adher|no se pega|no adher/i, ["pan"]],
-  [/atasc/i, ["gear"]],
-  [/temporiz|tiempo|minuto|reloj|programa/i, ["timer"]],
-  [/vapor/i, ["steam"]],
-  [/olla|cocci|cocin|horne/i, ["pot"]],
-  [/licu|batid/i, ["blender"]],
-  [/caf[eé]/i, ["coffee"]],
-  [/\bluz|\bled\b|indicador|lumin/i, ["bulb"]],
-  [/potencia|watt|\d\s?w\b/i, ["energy", "power"]],
-  [/bandeja|goteo|recolect|migaja/i, ["tray", "sparkle"]],
-  [/limpi|lavable/i, ["sparkle"]],
-  [/niveles?\b/i, ["levels"]],
-  [/temperatura|termostat/i, ["thermo", "touch"]],
-  [/digital|pantalla|display|t[aá]ctil|panel/i, ["touch"]],
-  [/inverter|tecnolog|autom[aá]tic/i, ["inverter", "tech"]],
-  [/silencio|ruido|sonid|mudo/i, ["volume"]],
-  [/agua|dispens|hidrat/i, ["drop"]],
-  [/capacidad|espacio|gran|volumen|litro/i, ["expand", "container"]],
-  [/fr[ií]o|enfri|congela|nofrost|fresc/i, ["snow"]],
-  [/energ|eficien|clase|ahorro/i, ["energy"]],
-  [/garant|respaldo|seguridad|protec/i, ["shield"]],
-  [/peso|kg\b/i, ["scale"]],
-  [/medid|tama|alto|ancho|profund/i, ["ruler"]],
-  [/volt|frecuencia|hz/i, ["plug"]],
-  [/refrig|gas/i, ["wind"]],
-  [/caja|empaque/i, ["box"]]
-];
-const POOL_ICONOS_CORREO = ["tag", "tech", "container", "box", "shield", "expand", "touch", "energy", "inverter", "drop", "volume", "snow", "thermo", "wind", "plug", "scale", "ruler", "sparkle", "tray", "bulb", "power", "levels", "timer", "pot", "blender", "coffee", "steam", "gear", "waffle", "grill", "sandwich", "eject", "pan", "toaster"];
-
 const logosCorreo = {};
 let correoSlide = null;          // lámina del correo (se edita en el editor)
 let modoEditorActivo = "fichas"; // qué lámina tiene el editor: fichas o correo
@@ -131,18 +94,11 @@ function textoIntroCorreo(productos) {
   return APERTURA_CORREO + "\nTe presentamos " + n + " nuevos productos:\n" + items.join("\n") + "\n" + mayus(cierreCorreo(productos[0].categoria));
 }
 
-/* Icono para cada característica del correo, sin repetir cuando hay alternativas */
+/* Icono para cada característica del correo, sin repetir */
 function asignarIconosCorreo(productos) {
-  const usados = new Set();
-  productos.forEach((p) => {
-    p.iconos = p.feats.map((f) => {
-      const regla = REGLAS_CORREO.find(([re]) => re.test(f));
-      let k = regla ? (regla[1].find((x) => !usados.has(x)) || regla[1][0]) : null;
-      if (!k) k = POOL_ICONOS_CORREO.find((x) => !usados.has(x)) || "tag";
-      usados.add(k);
-      return k;
-    });
-  });
+  const ic = asignarIconos(productos.flatMap((p) => p.feats));
+  let k = 0;
+  productos.forEach((p) => { p.iconos = p.feats.map(() => ic[k++]); });
 }
 
 function lineasCorreo(texto, peso, tam, maxW) {
