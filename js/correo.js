@@ -1,9 +1,10 @@
 /* ==========================================================================
-   Correo de bienvenida: gráfica horizontal (1536×1024) con 1 a 4 productos
-   Reutiliza el recorte de producto, la sombra, los iconos y el Worker de fichas.
+   Correo de bienvenida: gráfica horizontal (1536×1024), según la referencia
+   Lifestyle arriba con el/los productos encima, características en tarjetas
+   con iconos distintos, texto breve y logos de las cadenas al pie.
    ========================================================================== */
 
-const CORREO_W = 1536, CORREO_H = 1024, CORREO_BANDA = 440;
+const CORREO_W = 1536, CORREO_H = 1024;
 const CORREO_TEXTO = "#1c2b3a";
 
 const CADENAS_CORREO = {
@@ -19,7 +20,7 @@ const ARCHIVOS_LOGOS = {
   dismayor: "assets/correo/logo_dismayor.png"
 };
 const CATEGORIAS_CORREO = ["Refrigeradora", "Congelador", "Minibar", "Lavadora", "Cocina", "Aire acondicionado", "Otro"];
-const INTRO_CORREO = "En SMC seguimos ampliando nuestro portafolio con productos pensados para hacer tu día a día más práctico.";
+const INTRO_CORREO = "En SMC seguimos ampliando nuestro portafolio con productos pensados para tu día a día.";
 const FINAL_CORREO = "MÁS ESPACIO, MÁS COMODIDAD, MÁS SMC.";
 
 const logosCorreo = {};
@@ -58,119 +59,161 @@ function tamanoQueQuepa(ctx, texto, peso, maxW, max, min) {
   return min;
 }
 
-/* Dibuja la gráfica completa del correo. cfg = {productos:[{foto, modelo, categoria, feats}], ambiente, logoSMC, cadena, intro, final} */
+/* Asigna un icono distinto a cada característica de todo el correo (evita repeticiones) */
+function asignarIconos(productos) {
+  const usados = new Set();
+  const pool = Object.keys(ICONOS);
+  productos.forEach((p) => {
+    p.iconos = p.feats.map((f) => {
+      let k = claveIcono(f);
+      if (usados.has(k)) k = pool.find((x) => !usados.has(x)) || k;
+      usados.add(k);
+      return k;
+    });
+  });
+}
+
+function tarjetaCorreo(ctx, x, y, w, h) {
+  ctx.save();
+  ctx.shadowColor = "rgba(23,38,79,.14)"; ctx.shadowBlur = 24; ctx.shadowOffsetY = 6;
+  rrect(ctx, x, y, w, h, 26);
+  ctx.fillStyle = "#ffffff"; ctx.fill();
+  ctx.restore();
+}
+
+function circuloIcono(ctx, clave, cx, cy, r) {
+  ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.fillStyle = AZUL; ctx.fill();
+  const ic = icono(clave, BLANCO);
+  if (ic) { const s = r * 1.1; ctx.drawImage(ic, cx - s / 2, cy - s / 2, s, s); }
+}
+
+function textoCorreo(ctx, texto, x, y, maxW, tam, peso, color, alin, lh, maxLineas) {
+  fuente(ctx, peso, tam);
+  ctx.fillStyle = color; ctx.textAlign = alin;
+  const ax = alin === "center" ? x + maxW / 2 : x;
+  envolver(ctx, texto, maxW).slice(0, maxLineas || 9).forEach((l, i) => ctx.fillText(l, ax, y + i * lh));
+}
+
+/* Dibuja la gráfica completa. cfg = {productos:[{foto, modelo, categoria, feats}], ambiente, logoSMC, logos, intro, final} */
 function renderCorreo(cfg) {
   const c = document.createElement("canvas");
   c.width = CORREO_W; c.height = CORREO_H;
   const ctx = c.getContext("2d");
   const n = cfg.productos.length;
+  asignarIconos(cfg.productos);
 
   ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, CORREO_W, CORREO_H);
 
-  /* 1. Lifestyle al principio, con los productos encima */
-  ctx.save();
-  ctx.beginPath(); ctx.rect(0, 0, CORREO_W, CORREO_BANDA); ctx.clip();
-  ctx.filter = "brightness(1.25) contrast(0.95)";
-  drawCover(ctx, cfg.ambiente, 0, 0, CORREO_W, CORREO_BANDA);
-  ctx.filter = "none";
-  const velo = ctx.createLinearGradient(0, 0, CORREO_W * 0.6, 0);
-  velo.addColorStop(0, "rgba(71,169,228,0.96)");
-  velo.addColorStop(0.55, "rgba(71,169,228,0.82)");
-  velo.addColorStop(1, "rgba(71,169,228,0)");
-  ctx.fillStyle = velo;
-  ctx.fillRect(0, 0, CORREO_W, CORREO_BANDA);
-  ctx.restore();
+  /* 1. Encabezado azul a la izquierda */
+  const enc = ctx.createLinearGradient(0, 0, 740, 280);
+  enc.addColorStop(0, AZUL); enc.addColorStop(1, MARINO);
+  ctx.fillStyle = enc;
+  ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(740, 0); ctx.lineTo(700, 290); ctx.lineTo(0, 290); ctx.closePath();
+  ctx.fill();
 
-  const zonaX = 760, zonaW = CORREO_W - zonaX - 50, ranura = zonaW / n, baseY = CORREO_BANDA - 24;
-  const fotos = cfg.productos.map((p) => p.foto);
-  cfg.productos.forEach((p, i) => {
-    const h = Math.min(360, ranura * 0.92 * p.foto.height / p.foto.width);
-    const w = h * p.foto.width / p.foto.height;
-    const cx = zonaX + ranura * (i + 0.5);
-    dibujarProducto(ctx, { foto: i, x: cx - w / 2, y: baseY - h, w, h, sombra: true }, fotos);
-  });
-
-  /* Logo y título sobre el lifestyle */
   if (cfg.logoSMC) {
-    const lw = 230, lh = lw * cfg.logoSMC.height / cfg.logoSMC.width;
-    ctx.drawImage(cfg.logoSMC, 70, 50, lw, lh);
+    const lw = 210, lh = lw * cfg.logoSMC.height / cfg.logoSMC.width;
+    ctx.drawImage(cfg.logoSMC, 70, 40, lw, lh);
   }
   const lineas = n === 1
     ? ["CONOCE LA NUEVA " + cfg.productos[0].categoria.toUpperCase(), "SMC " + (cfg.productos[0].modelo || "").toUpperCase()]
     : ["DESCUBRE LO NUEVO DE SMC", n + " nuevos productos para tu hogar"];
-  ctx.save();
-  ctx.fillStyle = "#ffffff";
-  ctx.shadowColor = "rgba(0,0,0,.25)"; ctx.shadowBlur = 12;
-  ctx.textAlign = "left";
-  const tam = Math.min(...lineas.map((l) => tamanoQueQuepa(ctx, l, 800, 620, 56, 28)));
+  const tam = Math.min(...lineas.map((l) => tamanoQueQuepa(ctx, l, 800, 610, 48, 26)));
   fuente(ctx, 800, tam);
-  lineas.forEach((l, i) => ctx.fillText(l, 70, 210 + i * (tam * 1.2)));
-  ctx.restore();
+  ctx.fillStyle = "#ffffff"; ctx.textAlign = "left";
+  lineas.forEach((l, i) => ctx.fillText(l, 70, 170 + i * tam * 1.25));
 
-  /* 2. Introducción */
+  /* 2. Lifestyle con el/los productos encima (bloque redondeado) */
+  const lx = 40, ly = 250, lw2 = 660, lh2 = 430;
   ctx.save();
-  fuente(ctx, 500, 26);
-  ctx.fillStyle = MARINO; ctx.textAlign = "center";
-  envolver(ctx, cfg.intro, 1240).forEach((l, i) => ctx.fillText(l, CORREO_W / 2, 500 + i * 38));
+  rrect(ctx, lx, ly, lw2, lh2, 44);
+  ctx.clip();
+  ctx.filter = "brightness(1.25) contrast(0.95)";
+  drawCover(ctx, cfg.ambiente, lx, ly, lw2, lh2);
+  ctx.filter = "none";
   ctx.restore();
 
-  /* 3. Columna por producto: nombre, categoría y 4 características con icono */
-  const mX = 70, separa = 40, colW = (CORREO_W - mX * 2 - separa * (n - 1)) / n;
-  const dos = n <= 2;
+  const fotos = cfg.productos.map((p) => p.foto);
+  const ranura = lw2 / n, baseY = ly + lh2 - 28;
   cfg.productos.forEach((p, i) => {
-    const x = mX + i * (colW + separa);
-    ctx.save();
-    ctx.textAlign = "left";
-    fuente(ctx, 800, tamanoQueQuepa(ctx, p.modelo || "", 800, colW, 32, 20));
-    ctx.fillStyle = MARINO;
-    ctx.fillText((p.modelo || "").toUpperCase(), x, 612);
-    fuente(ctx, 700, 18);
-    ctx.fillStyle = AZUL;
-    ctx.fillText((p.categoria || "").toUpperCase(), x, 642);
-    ctx.restore();
-
-    p.feats.forEach((f, k) => {
-      let cx, cy, tw;
-      if (dos) { cx = x + (k % 2) * (colW / 2); cy = 672 + Math.floor(k / 2) * 96; tw = colW / 2 - 100; }
-      else { cx = x; cy = 672 + k * 54; tw = colW - 86; }
-      ctx.save();
-      ctx.beginPath(); ctx.arc(cx + 27, cy + 27, 27, 0, Math.PI * 2);
-      ctx.fillStyle = AZUL; ctx.fill();
-      const ic = icono(claveIcono(f), BLANCO);
-      if (ic) ctx.drawImage(ic, cx + 27 - 20, cy + 27 - 20, 40, 40);
-      fuente(ctx, 600, 22);
-      ctx.fillStyle = CORREO_TEXTO; ctx.textAlign = "left";
-      envolver(ctx, f, tw).slice(0, 2).forEach((l, j) => ctx.fillText(l, cx + 68, cy + 34 + j * 26));
-      ctx.restore();
-    });
+    const h = Math.min(370, ranura * 0.9 * p.foto.height / p.foto.width);
+    const w = h * p.foto.width / p.foto.height;
+    const cx = lx + ranura * (i + 0.5);
+    dibujarProducto(ctx, { foto: i, x: cx - w / 2, y: baseY - h, w, h, sombra: true }, fotos);
   });
 
-  /* 4. Frase final y cadenas */
+  /* 3. Texto introductorio breve */
+  textoCorreo(ctx, cfg.intro, 70, 735, 600, 24, 500, MARINO, "left", 36, 3);
+
+  /* 4. Características */
+  const areaX = 780, areaW = CORREO_W - areaX - 50, areaY = 110, areaH = 680;
+  if (n === 1) {
+    const p = cfg.productos[0];
+    const gap = 34, cw = (areaW - gap) / 2, ch = (areaH - gap) / 2;
+    p.feats.forEach((f, k) => {
+      const x = areaX + (k % 2) * (cw + gap), y = areaY + Math.floor(k / 2) * (ch + gap);
+      tarjetaCorreo(ctx, x, y, cw, ch);
+      circuloIcono(ctx, p.iconos[k], x + cw / 2, y + ch * 0.38, 58);
+      textoCorreo(ctx, f, x + 26, y + ch * 0.7, cw - 52, 26, 700, MARINO, "center", 32, 2);
+    });
+  } else {
+    const bloque = areaH / n;
+    const r = n === 2 ? 36 : n === 3 ? 24 : 20;
+    const cardH = n === 2 ? 118 : n === 3 ? 60 : 50;
+    const tamFeat = n === 2 ? 22 : n === 3 ? 20 : 19;
+    const tamMod = n === 2 ? 30 : n === 3 ? 26 : 24;
+    const cg = n === 2 ? 14 : 10, cw = (areaW - cg) / 2;
+    const cabecera = n === 2 ? 72 : 40;
+    cfg.productos.forEach((p, i) => {
+      const y0 = areaY + i * bloque;
+      const modelo = (p.modelo || "").toUpperCase();
+      ctx.save();
+      fuente(ctx, 800, tamanoQueQuepa(ctx, modelo, 800, areaW * 0.6, tamMod, 18));
+      ctx.fillStyle = MARINO; ctx.textAlign = "left";
+      ctx.fillText(modelo, areaX, y0 + tamMod + 4);
+      const anchoModelo = ctx.measureText(modelo).width;
+      fuente(ctx, 700, 16);
+      ctx.fillStyle = AZUL;
+      if (n === 2) ctx.fillText((p.categoria || "").toUpperCase(), areaX, y0 + tamMod + 28);
+      else ctx.fillText("· " + (p.categoria || "").toUpperCase(), areaX + anchoModelo + 14, y0 + tamMod + 4);
+      ctx.restore();
+      const yi = y0 + cabecera;
+      p.feats.forEach((f, k) => {
+        const x = areaX + (k % 2) * (cw + cg), y = yi + Math.floor(k / 2) * (cardH + cg);
+        tarjetaCorreo(ctx, x, y, cw, cardH);
+        circuloIcono(ctx, p.iconos[k], x + r + 18, y + cardH / 2, r);
+        textoCorreo(ctx, f, x + r * 2 + 34, y + cardH / 2 + tamFeat * 0.35, cw - r * 2 - 50, tamFeat, 700, MARINO, "left", tamFeat * 1.25, 2);
+      });
+    });
+  }
+
+  /* 5. Frase final y cadenas */
   ctx.save();
-  fuente(ctx, 800, 30);
+  fuente(ctx, 800, 28);
   ctx.fillStyle = AZUL; ctx.textAlign = "center";
-  ctx.fillText(cfg.final, CORREO_W / 2, 930);
+  ctx.fillText(cfg.final, CORREO_W / 2, 935);
   ctx.restore();
 
-  const px = 70, py = 952, pw = CORREO_W - 140, ph = 62;
+  const px = 70, py = 955, pw = CORREO_W - 140, ph = 56;
   ctx.save();
   rrect(ctx, px, py, pw, ph, ph / 2);
   ctx.fillStyle = "#ffffff"; ctx.fill();
   ctx.lineWidth = 3; ctx.strokeStyle = AZUL; ctx.stroke();
-  fuente(ctx, 800, 22);
+  fuente(ctx, 800, 21);
   ctx.fillStyle = MARINO; ctx.textAlign = "left";
-  ctx.fillText("Disponible en cadenas afiliadas:", px + 34, py + 39);
+  ctx.fillText("Disponible en cadenas afiliadas:", px + 34, py + 35);
   ctx.restore();
 
-  const altoLogo = 44, separaLogo = 40;
+  const altoLogo = 40, separaLogo = 40;
   const medidas = cfg.logos.map((img) => ({ img, w: Math.min(190, altoLogo * img.width / img.height) }));
   const total = medidas.reduce((s, m) => s + m.w, 0) + separaLogo * (medidas.length - 1);
   const inicio = px + 400, fin = px + pw - 30;
-  let lx = inicio + (fin - inicio - total) / 2;
+  let cursor = inicio + (fin - inicio - total) / 2;
   medidas.forEach((m) => {
-    ctx.drawImage(m.img, lx, py + (ph - altoLogo) / 2, m.w, altoLogo);
-    lx += m.w + separaLogo;
+    ctx.drawImage(m.img, cursor, py + (ph - altoLogo) / 2, m.w, altoLogo);
+    cursor += m.w + separaLogo;
   });
 
   return c;
@@ -208,23 +251,24 @@ function bloqueProducto(i, datos) {
     <div class="feat"><div class="num">3</div><input type="text" data-campo="f2" placeholder="Característica 3" value="${(d.feats && d.feats[2]) || ""}"></div>
     <div class="feat"><div class="num">4</div><input type="text" data-campo="f3" placeholder="Característica 4" value="${(d.feats && d.feats[3]) || ""}"></div>`;
   div._foto = d.foto || null;
-  div._nombreFoto = "";
 
   div.querySelector('[data-campo="foto"]').addEventListener("change", async (e) => {
     const f = e.target.files[0];
     if (!f) return;
     try {
       div._foto = recortarProducto(await archivoAImagen(f));
-      div.querySelector('[data-campo="foto"]').closest(".dz").classList.add("listo");
-      div.querySelector('[data-campo="foto"]').closest(".dz").querySelector(".dz-nombre").textContent = f.name;
+      const zona = div.querySelector('[data-campo="foto"]').closest(".dz");
+      zona.classList.add("listo");
+      zona.querySelector(".dz-nombre").textContent = f.name;
     } catch (err) { errorCorreo("No se pudo leer la foto: " + err.message); }
   });
 
   div.querySelector('[data-campo="spec"]').addEventListener("change", async (e) => {
     const f = e.target.files[0];
     if (!f) return;
-    div.querySelector('[data-campo="spec"]').closest(".dz").classList.add("listo");
-    div.querySelector('[data-campo="spec"]').closest(".dz").querySelector(".dz-nombre").textContent = f.name;
+    const zona = div.querySelector('[data-campo="spec"]').closest(".dz");
+    zona.classList.add("listo");
+    zona.querySelector(".dz-nombre").textContent = f.name;
     try {
       const texto = /\.(xlsx|xls)$/i.test(f.name) ? await excelATexto(f) : await f.text();
       const { caracteristicas } = await llamarWorker("/api/sugerir", { texto_spec: texto });
