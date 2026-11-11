@@ -76,10 +76,11 @@ async function generar() {
     }
     const esc = ficha.escenas || FICHA_DEMO.escenas;
     log("Generando los ambientes...");
-    const [portada, b1, b2] = await Promise.all([
+    const [portada, b1, b2, c4] = await Promise.all([
       obtenerAmbiente("portada", ambienteSeguro(ficha, esc.portada, 0)),
       obtenerAmbiente("b1", ambienteSeguro(ficha, esc.beneficios_1_2, 1)),
-      obtenerAmbiente("b2", ambienteSeguro(ficha, esc.beneficios_3_4, 2))
+      obtenerAmbiente("b2", ambienteSeguro(ficha, esc.beneficios_3_4, 2)),
+      obtenerAmbiente("c4", ambienteSeguro(ficha, esc.portada, 3))
     ]);
     log("Armando las 7 láminas...");
     const D = {
@@ -89,7 +90,7 @@ async function generar() {
       beneficios: estado.feats.map((f, i) => ({ titulo: f.trim(), texto: (ficha.beneficios && ficha.beneficios[i] && ficha.beneficios[i].texto) || "" })),
       datos: ficha.datos_destacados || [],
       despacho: ficha.despacho || [],
-      ambientes: { portada, b1, b2 },
+      ambientes: { portada, b1, b2, c4 },
       logo: estado.logo
     };
     estado.modelo = D.modelo;

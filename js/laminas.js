@@ -84,7 +84,7 @@ function laminaBeneficios(D, idx, fi) {
 }
 
 function laminaCuatro(D, fi) {
-  const E = [panelChevron(D.ambientes.b1)];
+  const E = [panelChevron(D.ambientes.c4)];
   E.push(productoEl(fi, 820, 1600, 1020));
   const tit = "CARACTERÍSTICAS PRINCIPALES";
   const t = fit(tit, 800, 700, 80, 64, 40, 1.1);
