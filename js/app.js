@@ -68,7 +68,7 @@ async function generar() {
       ficha = JSON.parse(JSON.stringify(FICHA_DEMO));
       log("Usando datos demo de SMCRF14TMGO.");
     } else {
-      log("Leyendo el spec sheet con Claude...");
+      log("Leyendo el spec sheet con la IA gratuita de Cloudflare...");
       const { ficha: f } = await llamarWorker("/api/extraer", {
         archivo_base64: estado.specBase64, media_type: estado.specMedia, texto_spec: estado.specTexto, caracteristicas: estado.feats.map((f) => f.trim())
       });
