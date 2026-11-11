@@ -26,42 +26,51 @@ const ARCHIVOS_LOGOS = {
 const CATEGORIAS_CORREO = ["Refrigeradora", "Congelador", "Minibar", "Lavadora", "Cocina", "Aire acondicionado", "Minidomésticos", "Otro"];
 const APERTURA_CORREO = "En SMC seguimos ampliando nuestro portafolio con productos pensados para hacer tu día a día más práctico.";
 const FINAL_CORREO = "MÁS ESPACIO, MÁS COMODIDAD, MÁS SMC.";
+/* Frase final según la categoría */
+function fraseFinalCorreo(categoria) {
+  const c = categoria || "";
+  if (/lavad/i.test(c)) return "MÁS LIMPIEZA, MÁS COMODIDAD, MÁS SMC.";
+  if (/aire/i.test(c)) return "MÁS FRESCURA, MÁS COMODIDAD, MÁS SMC.";
+  if (/minidom|cocina|otro/i.test(c)) return "MÁS TECNOLOGÍA, MÁS PRÁCTICO, MÁS SMC.";
+  return FINAL_CORREO;
+}
 const CIERRE_COMODIDAD = "para brindarte mayor comodidad en casa.";
 const CIERRE_COMIDAS = "para hacer tus comidas más fáciles y prácticas.";
 
-/* Icono según la palabra clave de cada característica (el primero que coincida) */
+/* Icono según la palabra clave de cada característica: se usa el primero de la lista que aún no esté en el correo */
 const REGLAS_CORREO = [
-  [/extra[ií]ble|desmont|removib/i, "eject"],
-  [/panini|prensa|parrilla|plancha|grill/i, "grill"],
-  [/sanduch|s[aá]ndwich|\bpanes?\b/i, "sandwich"],
-  [/wafle|waffle/i, "waffle"],
-  [/tostad/i, "toaster"],
-  [/antiadher|anti-adher|no se pega|no adher/i, "pan"],
-  [/atasc|atasco/i, "gear"],
-  [/temporiz|tiempo|minuto|reloj|programa/i, "timer"],
-  [/vapor/i, "steam"],
-  [/olla|cocci|cocin|horne/i, "pot"],
-  [/licu|batid/i, "blender"],
-  [/caf[eé]/i, "coffee"],
-  [/\bluz|\bled\b|indicador|lumin/i, "bulb"],
-  [/potencia|watt|\d\s?w\b/i, "power"],
-  [/bandeja|goteo|recolect|migaja/i, "tray"],
-  [/limpi|lavable/i, "sparkle"],
-  [/niveles?\b/i, "levels"],
-  [/temperatura|termostat/i, "thermo"],
-  [/digital|pantalla|display|t[aá]ctil|panel/i, "touch"],
-  [/inverter|tecnolog|autom[aá]tic/i, "inverter"],
-  [/silencio|ruido|sonid|mudo/i, "volume"],
-  [/agua|dispens|hidrat/i, "drop"],
-  [/capacidad|espacio|gran|volumen|litro/i, "expand"],
-  [/fr[ií]o|enfri|congela|nofrost|fresc/i, "snow"],
-  [/energ|eficien|clase|ahorro/i, "energy"],
-  [/garant|respaldo|seguridad|protec/i, "shield"],
-  [/peso|kg\b/i, "scale"],
-  [/medid|tama|alto|ancho|profund/i, "ruler"],
-  [/volt|frecuencia|hz/i, "plug"],
-  [/refrig|gas/i, "wind"],
-  [/caja|empaque/i, "box"]
+  [/cancel/i, ["power", "toaster"]],
+  [/apagad|autoapag|desconect/i, ["timer", "power"]],
+  [/extra[ií]ble|desmont|removib/i, ["eject"]],
+  [/sanduch|s[aá]ndwich|\bpanes?\b|wafle|waffle/i, ["sandwich", "waffle"]],
+  [/panini|prensa|parrilla|plancha|grill/i, ["grill"]],
+  [/tostad/i, ["toaster"]],
+  [/antiadher|anti-adher|no se pega|no adher/i, ["pan"]],
+  [/atasc/i, ["gear"]],
+  [/temporiz|tiempo|minuto|reloj|programa/i, ["timer"]],
+  [/vapor/i, ["steam"]],
+  [/olla|cocci|cocin|horne/i, ["pot"]],
+  [/licu|batid/i, ["blender"]],
+  [/caf[eé]/i, ["coffee"]],
+  [/\bluz|\bled\b|indicador|lumin/i, ["bulb"]],
+  [/potencia|watt|\d\s?w\b/i, ["energy", "power"]],
+  [/bandeja|goteo|recolect|migaja/i, ["tray", "sparkle"]],
+  [/limpi|lavable/i, ["sparkle"]],
+  [/niveles?\b/i, ["levels"]],
+  [/temperatura|termostat/i, ["thermo", "touch"]],
+  [/digital|pantalla|display|t[aá]ctil|panel/i, ["touch"]],
+  [/inverter|tecnolog|autom[aá]tic/i, ["inverter", "tech"]],
+  [/silencio|ruido|sonid|mudo/i, ["volume"]],
+  [/agua|dispens|hidrat/i, ["drop"]],
+  [/capacidad|espacio|gran|volumen|litro/i, ["expand", "container"]],
+  [/fr[ií]o|enfri|congela|nofrost|fresc/i, ["snow"]],
+  [/energ|eficien|clase|ahorro/i, ["energy"]],
+  [/garant|respaldo|seguridad|protec/i, ["shield"]],
+  [/peso|kg\b/i, ["scale"]],
+  [/medid|tama|alto|ancho|profund/i, ["ruler"]],
+  [/volt|frecuencia|hz/i, ["plug"]],
+  [/refrig|gas/i, ["wind"]],
+  [/caja|empaque/i, ["box"]]
 ];
 const POOL_ICONOS_CORREO = ["tag", "tech", "container", "box", "shield", "expand", "touch", "energy", "inverter", "drop", "volume", "snow", "thermo", "wind", "plug", "scale", "ruler", "sparkle", "tray", "bulb", "power", "levels", "timer", "pot", "blender", "coffee", "steam", "gear", "waffle", "grill", "sandwich", "eject", "pan", "toaster"];
 
@@ -117,19 +126,19 @@ function textoIntroCorreo(productos) {
     return APERTURA_CORREO + "\nTe presentamos nuestra " + nombre(p) + " " + p.modelo + ", que combina " +
       ft[0] + ", " + ft[1] + " y " + ft[2] + ", " + cierreCorreo(p.categoria);
   }
-  const lista = conModelo.map((p) => nombre(p) + " " + p.modelo);
-  const unidos = lista.length > 1 ? lista.slice(0, -1).join(", ") + " y " + lista[lista.length - 1] : lista[0];
-  return APERTURA_CORREO + "\nTe presentamos " + n + " nuevos productos: " + unidos + ", " + cierreCorreo(productos[0].categoria);
+  const mayus = (t) => t.charAt(0).toUpperCase() + t.slice(1);
+  const items = conModelo.map((p, i) => (i + 1) + ". " + mayus(nombre(p)) + " " + p.modelo + ".");
+  return APERTURA_CORREO + "\nTe presentamos " + n + " nuevos productos:\n" + items.join("\n") + "\n" + mayus(cierreCorreo(productos[0].categoria));
 }
 
-/* Icono distinto para cada característica de todo el correo */
+/* Icono para cada característica del correo, sin repetir cuando hay alternativas */
 function asignarIconosCorreo(productos) {
   const usados = new Set();
   productos.forEach((p) => {
     p.iconos = p.feats.map((f) => {
       const regla = REGLAS_CORREO.find(([re]) => re.test(f));
-      let k = regla ? regla[1] : null;
-      if (!k || usados.has(k)) k = POOL_ICONOS_CORREO.find((x) => !usados.has(x)) || k || "tag";
+      let k = regla ? (regla[1].find((x) => !usados.has(x)) || regla[1][0]) : null;
+      if (!k) k = POOL_ICONOS_CORREO.find((x) => !usados.has(x)) || "tag";
       usados.add(k);
       return k;
     });
@@ -179,7 +188,7 @@ function construirCorreo(cfg) {
   /* 1. Panel azul de la izquierda con el ambiente integrado */
   els.push(elem("rect", { x: 0, y: 0, w: CORREO_LW, h: CORREO_H, relleno: { lineal: [0, 0, 1, 1], stops: [[0, AZUL], [1, MARINO]] }, fondo: true }));
   if (cfg.ambiente) els.push(imagenEl(cfg.ambiente, { x: 0, y: 0, w: CORREO_LW, h: CORREO_H, fondo: true }));
-  els.push(elem("rect", { x: 0, y: 0, w: CORREO_LW, h: CORREO_H, relleno: { lineal: [0, 0, 1, 1], stops: [[0, "rgba(71,169,228,0.90)"], [1, "rgba(38,58,118,0.94)"]] }, fondo: true }));
+  els.push(elem("rect", { x: 0, y: 0, w: CORREO_LW, h: CORREO_H, relleno: { lineal: [0, 0, 1, 1], stops: [[0, "rgba(71,169,228,0.55)"], [1, "rgba(38,58,118,0.72)"]] }, fondo: true }));
 
   if (cfg.logoSMC) {
     const lw = 200, lh = lw * cfg.logoSMC.height / cfg.logoSMC.width;
@@ -191,22 +200,27 @@ function construirCorreo(cfg) {
   const tamT = Math.min(...titulo.map((l) => tamUnaLinea(l, 800, 610, 50, 26)));
   titulo.forEach((l, i) => els.push(txt({ x: 70, y: 150 + i * tamT * 1.25, w: 610, texto: l, tam: tamT, peso: 800, color: BLANCO, sombra: true, lh: 1.2 })));
 
-  /* 2. Packshot de los productos sobre el azul */
-  const baseP = 640, zonaW = 620, slot = zonaW / n;
+  /* 2. Packshot de los productos sobre el azul: 1 centrado, 2 en fila, 3 en triángulo, 4 en cuadrícula */
+  const DISPOSICION = {
+    1: [{ cx: 350, base: 620, maxH: 380, maxW: 340 }],
+    2: [{ cx: 180, base: 610, maxH: 330, maxW: 260 }, { cx: 520, base: 610, maxH: 330, maxW: 260 }],
+    3: [{ cx: 350, base: 440, maxH: 200, maxW: 230 }, { cx: 165, base: 630, maxH: 200, maxW: 230 }, { cx: 535, base: 630, maxH: 200, maxW: 230 }],
+    4: [{ cx: 180, base: 430, maxH: 175, maxW: 230 }, { cx: 520, base: 430, maxH: 175, maxW: 230 }, { cx: 180, base: 620, maxH: 175, maxW: 230 }, { cx: 520, base: 620, maxH: 175, maxW: 230 }]
+  };
   cfg.productos.forEach((p, i) => {
+    const pos = DISPOSICION[n][i];
     const ratio = p.foto.width / p.foto.height;
-    const h = Math.min(340, slot * 0.95 / ratio);
-    const w = h * ratio;
-    const cx = 40 + slot * (i + 0.5);
-    els.push(elem("producto", { foto: i, x: cx - w / 2, y: baseP - h, w, h, sombra: true }));
+    const h = Math.min(pos.maxH, pos.maxW / ratio), w = h * ratio;
+    els.push(elem("producto", { foto: i, x: pos.cx - w / 2, y: pos.base - h, w, h, sombra: true }));
   });
 
-  /* 3. Introducción (dos párrafos) */
-  let yi = 668;
+  /* 3. Introducción (apertura, presentación y lista de productos) */
+  let yi = 640;
   cfg.intro.split(/\n+/).map((p) => p.trim()).filter(Boolean).forEach((parrafo) => {
+    const lista = /^\d+\./.test(parrafo);
     const lineas = lineasCorreo(parrafo, 500, 21, 600);
-    els.push(txt({ x: 70, y: yi, w: 600, texto: parrafo, tam: 21, peso: 500, color: BLANCO, alin: "left", lh: 1.42 }));
-    yi += lineas.length * 21 * 1.42 + 12;
+    els.push(txt({ x: 70, y: yi, w: 600, texto: parrafo, tam: 21, peso: 500, color: BLANCO, alin: "left", lh: 1.55 }));
+    yi += lineas.length * 21 * 1.55 + (lista ? 4 : 14);
   });
 
   /* 4. Zona derecha: productos con su nombre, código, foto y píldoras */
@@ -378,6 +392,7 @@ function actualizarIntro() {
   const prods = [...$("cProductos").querySelectorAll(".prod-bloque")].map(leerBloque);
   if (!prods.length) return;
   $("cIntro").value = textoIntroCorreo(prods);
+  $("cFinal").value = fraseFinalCorreo(prods[0].categoria);
 }
 
 /* Bloques de producto según el número elegido y los datos de cada spec sheet */
@@ -540,6 +555,9 @@ function iniciarCorreo() {
     pdf.save("correo_bienvenida_smc.pdf");
   });
   $("cFinal").value = FINAL_CORREO;
+  // Cualquier cambio en los datos de los productos actualiza la introducción y la frase final
+  $("cProductos").addEventListener("input", actualizarIntro);
+  $("cProductos").addEventListener("change", actualizarIntro);
   renderBloquesCorreo();
 }
 iniciarCorreo();
