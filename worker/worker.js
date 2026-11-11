@@ -7,7 +7,7 @@
 //   POST /api/imagen   -> Workers AI (SDXL) genera el ambiente de cocina sin producto
 
 const MODELO_TEXTO_GRATIS = "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
-const SOLO_EXCEL = "Por ahora la lectura gratuita solo funciona con Excel o CSV. Sube el Excel del spec sheet o escribe las 4 características a mano.";
+const SOLO_EXCEL = "El spec sheet debe ser un archivo Excel (.xlsx). Súbelo o escribe las 4 características a mano.";
 
 const MARCAS_WORKER = {
   smc: { nombre: "SMC", regla: "solo el código que empieza con SMC, sin el código del proveedor", ejemplo: "SMCETO750N" },

@@ -196,17 +196,20 @@ async function excelATexto(archivo) {
 $("spec").addEventListener("change", async (e) => {
   const f = e.target.files[0];
   if (!f) return;
+  if (!/\.(xlsx|xls)$/i.test(f.name)) {
+    e.target.value = "";
+    error("El spec sheet solo puede ser un archivo Excel (.xlsx o .xls).");
+    return;
+  }
   estado.spec = f; estado.demo = false;
   estado.specTexto = null; estado.specBase64 = null;
   estado.specMedia = f.type;
   $("specNombre").textContent = "Archivo: " + f.name;
   try {
-    if (/\.(xlsx|xls)$/i.test(f.name)) estado.specTexto = await excelATexto(f);
-    else if (/\.csv$/i.test(f.name)) estado.specTexto = await f.text();
-    else estado.specBase64 = await archivoABase64(f);
+    estado.specTexto = await excelATexto(f);
   } catch (err) { error("No se pudo leer el archivo: " + err.message); }
   validar();
-  if (estado.specBase64 || estado.specTexto) await sugerirCaracteristicas();
+  if (estado.specTexto) await sugerirCaracteristicas();
 });
 
 async function sugerirCaracteristicas() {

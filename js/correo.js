@@ -307,8 +307,7 @@ function leerBloque(div) {
 /* Texto de un spec sheet para la IA gratuita (solo Excel y CSV) */
 async function textoSpecCorreo(archivo) {
   if (/\.(xlsx|xls)$/i.test(archivo.name)) return await excelATexto(archivo);
-  if (/\.csv$/i.test(archivo.name)) return await archivo.text();
-  throw new Error("Por ahora el spec sheet debe ser Excel o CSV (" + archivo.name + ").");
+  throw new Error("El spec sheet solo puede ser Excel (" + archivo.name + ").");
 }
 
 function miniaturaCorreo(canvas) {
