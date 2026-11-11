@@ -224,6 +224,8 @@
         <button id="bPdf" class="btn">Descargar PDF</button>
         <button id="bPptx" class="btn sec">Descargar PowerPoint</button>
         <button id="bPng" class="btn sec">Lámina actual (PNG)</button>
+        <button id="cPdfE" class="btn" hidden>Descargar PDF del correo</button>
+        <button id="cPngE" class="btn sec" hidden>Descargar PNG del correo</button>
       </div>
     </div>
     <div class="editor">
@@ -306,20 +308,16 @@
         <div class="num">4</div>
         <div>
           <h2>Generar el correo</h2>
-          <small>La IA crea el ambiente de fondo (cocina o lavandería) y los productos se pegan encima, en la parte de arriba del correo.</small>
+          <small>La IA crea el ambiente de fondo (cocina o lavandería). El correo se abre en el editor, donde puedes cambiar textos, fotos y posiciones antes de descargarlo.</small>
         </div>
       </div>
       <div class="acciones">
         <button id="cGen" class="btn flecha">Generar correo <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
-        <div id="cDescargas" class="acciones" hidden>
-          <button id="cPng" class="btn sec">Descargar PNG</button>
-          <button id="cPdf" class="btn sec">Descargar PDF</button>
-        </div>
+        <button id="cEditar" class="btn sec" hidden>Volver a editar el correo</button>
       </div>
       <div class="barra" id="cBarra"></div>
       <p id="cLog" class="estado"></p>
       <div id="cError" class="alerta"></div>
-      <div id="cVista" class="vista-correo"></div>
     </section>
   </div>
 

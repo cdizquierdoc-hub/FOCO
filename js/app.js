@@ -230,7 +230,6 @@ function exportarPptx() {
   pptx.writeFile({ fileName: `Ficha_SMC_${estado.modelo || "producto"}.pptx` });
 }
 $("bVolver").addEventListener("click", () => { $("secEditor").hidden = true; });
-$("bAbrirEditor").addEventListener("click", () => { $("secEditor").hidden = false; refrescarTodo(); });
 $("bPdf").addEventListener("click", exportarPdf);
 $("bPptx").addEventListener("click", exportarPptx);
 $("bPng").addEventListener("click", () => {

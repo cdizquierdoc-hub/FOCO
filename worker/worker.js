@@ -140,9 +140,9 @@ const CATEGORIAS_DATOS = ["Refrigeradora", "Congelador", "Minibar", "Lavadora", 
 const PROMPT_DATOS = `Lee el spec sheet y responde SOLO con JSON válido con esta forma:
 {"modelo": "código exacto del modelo, por ejemplo SMCRF14TMGO",
  "categoria": "una sola de: Refrigeradora, Congelador, Minibar, Lavadora, Cocina, Aire acondicionado, Minidomésticos, Otro",
- "caracteristicas": ["4 características principales de venta, de 2 a 4 palabras cada una"],
- "presentacion": "texto de 2 frases en español con este estilo: 'Te presentamos la nueva SMCRF14TMGO, una refrigeradora que combina gran capacidad, diseño moderno y funcionalidades pensadas para brindarte mayor comodidad en casa.'"}
-Reglas: usa solo datos del spec sheet. La presentación debe tener entre 30 y 45 palabras, mencionar 3 beneficios concretos del spec sheet y terminar con 'pensadas para brindarte mayor comodidad en casa.' El artículo (una/un) debe concordar con la categoría.`;
+ "tipo": "nombre corto y específico del producto en minúscula, por ejemplo sanduchera 2 panes, tostadora, prensa tipo panini, refrigeradora",
+ "caracteristicas": ["4 características principales de venta, de 2 a 4 palabras cada una"]}
+Reglas: usa solo datos del spec sheet. El tipo va en minúscula y sin el código del modelo.`;
 
 async function datos(body, env, cors) {
   const { texto_spec } = body;
@@ -157,7 +157,8 @@ async function datos(body, env, cors) {
     modelo: String(parsed.modelo || "").trim(),
     categoria,
     caracteristicas,
-    presentacion: String(parsed.presentacion || "").trim()
+    tipo: String(parsed.tipo || "").trim(),
+    presentacion: ""
   }, 200, cors);
 }
 

@@ -63,6 +63,23 @@ const ICONOS = {
   shield: '<path d="M32 6l22 8v16c0 14-10 24-22 28C20 54 10 44 10 30V14z"/><path d="M22 32l7 7 13-14"/>',
   container: '<path d="M10 22l22-10 22 10v22L32 54 10 44z"/><path d="M10 22l22 10 22-10M32 32v22"/>',
   tech: '<circle cx="32" cy="32" r="9"/><path d="M32 8v12M32 44v12M8 32h12M44 32h12M16 16l8 8M40 40l8 8M48 16l-8 8M24 40l-8 8"/>',
+  eject: '<rect x="12" y="20" width="32" height="26" rx="4"/><path d="M48 33h10M52 27l6 6-6 6"/>',
+  grill: '<rect x="10" y="18" width="44" height="12" rx="3"/><rect x="10" y="36" width="44" height="12" rx="3"/><path d="M18 30v6M28 30v6M38 30v6M46 30v6"/>',
+  sandwich: '<path d="M10 40h44v6a4 4 0 0 1-4 4H14a4 4 0 0 1-4-4z"/><path d="M10 40c0-14 8-22 22-22s22 8 22 22"/>',
+  waffle: '<rect x="12" y="12" width="40" height="40" rx="4"/><path d="M12 22h40M12 32h40M12 42h40M22 12v40M32 12v40M42 12v40"/>',
+  toaster: '<rect x="10" y="30" width="44" height="22" rx="5"/><path d="M20 30V16h9v14M35 30V16h9v14M48 40h2"/>',
+  pan: '<circle cx="28" cy="34" r="16"/><path d="M44 30h12M22 34l4 4 8-8"/>',
+  gear: '<circle cx="32" cy="32" r="9"/><circle cx="32" cy="32" r="20" stroke-dasharray="6 5"/><path d="M32 8v6M32 50v6M8 32h6M50 32h6"/>',
+  timer: '<circle cx="32" cy="34" r="20"/><path d="M32 34l7 7M26 8h12M32 8v6"/>',
+  steam: '<path d="M22 46V30c-4-4 4-8 0-12M32 46V24c-4-4 4-8 0-12M42 46V30c-4-4 4-8 0-12"/><path d="M14 56h36"/>',
+  pot: '<path d="M10 28h40v14a14 14 0 0 1-14 14H24A14 14 0 0 1 10 42z"/><path d="M50 34h6M18 20c0-4 4-4 4-8M30 20c0-4 4-4 4-8"/>',
+  blender: '<path d="M18 14h28l4 26H14z"/><rect x="14" y="44" width="36" height="10" rx="2"/><path d="M26 22h12"/>',
+  coffee: '<path d="M14 26h28v16a12 12 0 0 1-12 12h-4a12 12 0 0 1-12-12z"/><path d="M42 30h4a6 6 0 0 1 0 12h-4M10 56h36"/>',
+  bulb: '<path d="M24 40a16 16 0 1 1 16 0v4H24z"/><path d="M26 52h12M28 58h8"/>',
+  power: '<path d="M32 8v22"/><path d="M20 18a18 18 0 1 0 24 0"/>',
+  tray: '<rect x="8" y="30" width="48" height="8" rx="3"/><path d="M14 38v8h36v-8"/><path d="M20 18q12 8 24 0"/>',
+  sparkle: '<path d="M32 8l4 14 14 4-14 4-4 14-4-14-14-4 14-4z"/>',
+  levels: '<rect x="12" y="38" width="8" height="16"/><rect x="28" y="28" width="8" height="26"/><rect x="44" y="16" width="8" height="38"/>',
   star: '<path d="M32 8l7 16 17 2-13 12 4 17-15-9-15 9 4-17L8 26l17-2z"/>'
 };
 const ICONO_DESPACHO = { tag: "tag", modelo: "tech", qr: "tech", tipo: "box", tech: "inverter", energia: "energy", capacidad: "expand", medidas: "ruler", peso: "scale", caja: "box", voltaje: "plug", refrigerante: "wind", contenedor: "container", potencia: "energy" };
@@ -107,11 +124,13 @@ function icono(clave, color) {
 
 /* Utilidades de canvas y texto */
 const MEDIR = document.createElement("canvas").getContext("2d");
-function nuevoLienzo() {
+function nuevoLienzo(w = W, h = H) {
   const c = document.createElement("canvas");
-  c.width = W; c.height = H;
+  c.width = w; c.height = h;
   return c;
 }
+/* Tamaño de una lámina: las fichas usan 1920×1080; el correo puede tener otro tamaño */
+function dimsSlide(s) { return { w: (s && s.w) || W, h: (s && s.h) || H }; }
 function fuente(ctx, peso, tam) { ctx.font = `${peso} ${tam}px ${FUENTE}`; }
 function drawCover(ctx, img, x, y, w, h) {
   const s = Math.max(w / img.width, h / img.height);
@@ -344,18 +363,20 @@ function dibujarProducto(ctx, e, fotos) {
 
 /* Pinta una lámina completa (también la usan el editor, las miniaturas y la exportación) */
 function pintarSlide(ctx, s) {
+  const d = dimsSlide(s);
   ctx.fillStyle = s.fondo || BLANCO;
-  ctx.fillRect(0, 0, W, H);
+  ctx.fillRect(0, 0, d.w, d.h);
   for (const e of s.elementos) {
     if (e.tipo === "imagen") dibujarImagen(ctx, e);
     else if (e.tipo === "texto") dibujarTexto(ctx, e);
     else if (e.tipo === "rect" || e.tipo === "circulo" || e.tipo === "poli") dibujarForma(ctx, e);
-    else if (e.tipo === "producto") dibujarProducto(ctx, e, estado.productos);
+    else if (e.tipo === "producto") dibujarProducto(ctx, e, s.fotos || estado.productos);
     else if (e.tipo === "icono") ctx.drawImage(icono(e.clave, e.color), e.x, e.y, e.w, e.h);
   }
 }
 function lienzoDeSlide(s) {
-  const c = nuevoLienzo();
+  const d = dimsSlide(s);
+  const c = nuevoLienzo(d.w, d.h);
   pintarSlide(c.getContext("2d"), s);
   return c;
 }

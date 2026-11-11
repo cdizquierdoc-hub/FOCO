@@ -39,7 +39,9 @@ function refrescarTodo() {
 
 function redibujarLienzo() {
   const s = slideActual();
-  const ctx = $("lienzo").getContext("2d");
+  const d = dimsSlide(s), lz = $("lienzo");
+  if (lz.width !== d.w || lz.height !== d.h) { lz.width = d.w; lz.height = d.h; }
+  const ctx = lz.getContext("2d");
   pintarSlide(ctx, s);
   const e = seleccionado();
   if (e) {
@@ -64,8 +66,9 @@ function renderMiniaturas() {
     b.type = "button";
     b.className = "mini-item" + (i === editor.actual ? " act" : "");
     const cv = document.createElement("canvas");
-    cv.width = 240; cv.height = 135;
-    cv.getContext("2d").drawImage(lienzoDeSlide(s), 0, 0, 240, 135);
+    const dm = dimsSlide(s);
+    cv.width = 240; cv.height = Math.round(240 * dm.h / dm.w);
+    cv.getContext("2d").drawImage(lienzoDeSlide(s), 0, 0, 240, cv.height);
     b.appendChild(cv);
     const t = document.createElement("div");
     t.textContent = `${i + 1}. ${s.nombre}`;
@@ -165,9 +168,10 @@ function renderPropiedades() {
   if (e.tipo === "producto") {
     const tira = document.createElement("div");
     tira.className = "tira-fotos";
-    estado.productos.forEach((c, i) => {
+    const fotosS = slideActual().fotos || estado.productos, minisS = slideActual().minis || estado.miniaturas;
+    fotosS.forEach((c, i) => {
       const im = document.createElement("img");
-      im.src = estado.miniaturas[i];
+      im.src = minisS[i];
       im.className = e.foto === i ? "act" : "";
       im.title = "Foto " + (i + 1);
       im.onclick = () => {
@@ -223,7 +227,8 @@ function eliminarSeleccion() {
 /* ---------- Mouse / tacto sobre el lienzo ---------- */
 function coordsLienzo(ev) {
   const r = $("lienzo").getBoundingClientRect();
-  return { x: (ev.clientX - r.left) * W / r.width, y: (ev.clientY - r.top) * H / r.height };
+  const d = dimsSlide(slideActual());
+  return { x: (ev.clientX - r.left) * d.w / r.width, y: (ev.clientY - r.top) * d.h / r.height };
 }
 function iniciarEditor() {
   const lienzo = $("lienzo");
