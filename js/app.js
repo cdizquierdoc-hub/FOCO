@@ -70,7 +70,7 @@ async function generar() {
     } else {
       log("Leyendo el spec sheet con Claude...");
       const { ficha: f } = await llamarWorker("/api/extraer", {
-        archivo_base64: estado.specBase64, media_type: estado.specMedia, caracteristicas: estado.feats.map((f) => f.trim())
+        archivo_base64: estado.specBase64, media_type: estado.specMedia, texto_spec: estado.specTexto, caracteristicas: estado.feats.map((f) => f.trim())
       });
       ficha = f;
     }
@@ -150,13 +150,25 @@ $("fotos").addEventListener("change", async (e) => {
   } catch (err) { error(err.message); }
 });
 
+async function excelATexto(archivo) {
+  const libro = XLSX.read(await archivo.arrayBuffer(), { type: "array" });
+  return libro.SheetNames
+    .map((n) => "Hoja: " + n + "\n" + XLSX.utils.sheet_to_csv(libro.Sheets[n], { blankrows: false }))
+    .join("\n\n");
+}
+
 $("spec").addEventListener("change", async (e) => {
   const f = e.target.files[0];
   if (!f) return;
   estado.spec = f; estado.demo = false;
+  estado.specTexto = null; estado.specBase64 = null;
   estado.specMedia = f.type;
   $("specNombre").textContent = "Archivo: " + f.name;
-  try { estado.specBase64 = await archivoABase64(f); } catch (err) { error(err.message); }
+  try {
+    if (/\.(xlsx|xls)$/i.test(f.name)) estado.specTexto = await excelATexto(f);
+    else if (/\.csv$/i.test(f.name)) estado.specTexto = await f.text();
+    else estado.specBase64 = await archivoABase64(f);
+  } catch (err) { error("No se pudo leer el archivo: " + err.message); }
   validar();
 });
 

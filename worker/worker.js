@@ -84,8 +84,8 @@ export default {
 
 async function extraer(body, env, cors) {
   if (!env.ANTHROPIC_API_KEY) return json({ error: "Falta ANTHROPIC_API_KEY en el Worker" }, 500, cors);
-  const { archivo_base64, media_type, caracteristicas } = body;
-  if (!archivo_base64 || !media_type) return json({ error: "Falta el spec sheet" }, 400, cors);
+  const { archivo_base64, media_type, caracteristicas, texto_spec } = body;
+  if (!texto_spec && (!archivo_base64 || !media_type)) return json({ error: "Falta el spec sheet" }, 400, cors);
   if (!Array.isArray(caracteristicas) || caracteristicas.length !== 4 || caracteristicas.some((c) => !c || !String(c).trim())) {
     return json({ error: "Se requieren exactamente 4 características" }, 400, cors);
   }
@@ -110,7 +110,9 @@ async function extraer(body, env, cors) {
       messages: [
         {
           role: "user",
-          content: [bloqueArchivo, { type: "text", text: PROMPT_EXTRAER + "\n" + lista }],
+          content: texto_spec
+            ? [{ type: "text", text: "Spec sheet (Excel/CSV convertido a texto):\n" + String(texto_spec).slice(0, 150000) }, { type: "text", text: PROMPT_EXTRAER + "\n" + lista }]
+            : [bloqueArchivo, { type: "text", text: PROMPT_EXTRAER + "\n" + lista }],
         },
       ],
     }),

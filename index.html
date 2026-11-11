@@ -144,8 +144,8 @@
       <label class="dz" id="dzSpec">
         <div class="ico"><svg viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"/></svg></div>
         <strong>Spec sheet</strong>
-        <span class="dz-nombre" data-def="PDF o imagen. Arrastra aquí o toca para elegir.">PDF o imagen. Arrastra aquí o toca para elegir.</span>
-        <input type="file" id="spec" accept="application/pdf,image/png,image/jpeg">
+        <span class="dz-nombre" data-def="PDF, imagen, Excel (.xlsx) o CSV. Arrastra aquí o toca para elegir.">PDF, imagen, Excel (.xlsx) o CSV. Arrastra aquí o toca para elegir.</span>
+        <input type="file" id="spec" accept="application/pdf,image/png,image/jpeg,.xlsx,.xls,.csv">
       </label>
       <label class="dz" id="dzFotos">
         <div class="ico"><svg viewBox="0 0 24 24"><path d="M12 16V4M7 9l5-5 5 5M4 20h16"/></svg></div>
@@ -213,6 +213,7 @@
   <p class="pie">FICHAMBA · Cresa Retail · Marcas Propias</p>
 </main>
 
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="js/base.js"></script>
 <script src="js/laminas.js"></script>
 <script src="js/editor.js"></script>
