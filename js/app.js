@@ -169,6 +169,7 @@ function limpiarDespacho(lista, modelo) {
     if (!it) return null;
     let etiqueta = String(it.etiqueta || ""), valor = String(it.valor || "");
     if (/almacen/i.test(etiqueta)) return null;
+    if (/no especificad|no aplica|no disponible|^n\/?a$|^-+$/i.test(valor.trim())) return null;
     valor = valor.replace(/upright|almacenamiento/gi, "").replace(/\n\s*\n/g, "\n").trim();
     if (/peso/i.test(etiqueta)) etiqueta = "Peso";
     if (!valor) return null;

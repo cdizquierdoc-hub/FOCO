@@ -173,12 +173,13 @@ function laminaDespacho(D, fi) {
   E.push(txt({ texto: p1, x: 90, y: 170 - tam * 0.95, w: anchoA + 10, tam, peso: 400, color: AZUL }));
   E.push(txt({ texto: p2, x: 90 + anchoA, y: 170 - tam * 0.95, w: anchoB + 10, tam, peso: 800, color: AZUL }));
 
-  // Especificaciones en 3 columnas. Con pocos datos, cada fila es más alta y la letra más grande (sin espacios vacíos)
+  // Especificaciones en 3 columnas, con el mismo tamaño de letra y centradas verticalmente
   const items = D.despacho.slice(0, 15);
   const porCol = Math.max(1, Math.ceil(items.length / 3));
   const columnasX = [60, 395, 730];
   const yIni = 290, yFin = 1010, alto = (yFin - yIni) / porCol;
-  const escala = Math.max(0.95, Math.min(1.6, alto / 150));
+  // Tamaño fijo para que todas las fichas se vean igual de ordenadas, sin importar cuántos datos haya
+  const escala = 1;
   const ic = Math.round(62 * escala), anchoT = 320 - ic - 20;
   items.forEach((item, i) => {
     const x = columnasX[Math.floor(i / porCol)], yFila = yIni + (i % porCol) * alto;
