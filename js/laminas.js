@@ -178,7 +178,7 @@ function laminaDespacho(D, fi) {
   // Especificaciones en 3 columnas, con el mismo tamaño de letra y centradas verticalmente
   const items = D.despacho.slice(0, 15);
   // Cuadrícula ordenada: filas y columnas alineadas, se lee de izquierda a derecha y de arriba abajo
-  const nCols = items.length <= 2 ? 1 : items.length <= 6 ? 2 : 3;
+  const nCols = items.length <= 3 ? 1 : items.length <= 6 ? 2 : 3;
   const nFilas = Math.ceil(items.length / nCols);
   const separacion = 1020 / nCols;
   const columnasX = Array.from({ length: nCols }, (_, c) => 60 + c * separacion);

@@ -166,6 +166,19 @@ async function montarFicha(ficha, amb, feats) {
 }
 
 /* Despacho: sin almacenamiento ni palabras en inglés; el peso se muestra solo como "Peso" */
+/* Si el dato trae varias medidas en una sola celda (producto, caja, máster), cada una pasa a su propia fila */
+const NOMBRES_MEDIDA = { "gift box": "Medidas de la caja", "master carton": "Medidas de la caja máster", "product": "Medidas del producto", "box": "Medidas de la caja" };
+function partirDato(it, etiqueta, valor) {
+  const lineas = valor.split("\n").map((s) => s.trim()).filter(Boolean);
+  if (lineas.length < 2) return [Object.assign({}, it, { etiqueta, valor })];
+  return lineas.map((l, i) => {
+    const m = l.match(/^([^:]{2,40}):\s*(.+)$/);
+    if (!m) return Object.assign({}, it, { etiqueta, valor: l, icono: null });
+    const nombre = NOMBRES_MEDIDA[m[1].trim().toLowerCase()] || m[1].trim();
+    return Object.assign({}, it, { etiqueta: nombre, valor: m[2].trim(), icono: null });
+  });
+}
+
 function limpiarDespacho(lista, modelo) {
   return (lista || []).map((it) => {
     if (!it) return null;
@@ -175,8 +188,9 @@ function limpiarDespacho(lista, modelo) {
     valor = valor.replace(/upright|almacenamiento/gi, "").replace(/\n\s*\n/g, "\n").trim();
     if (/peso/i.test(etiqueta)) etiqueta = "Peso";
     if (!valor) return null;
-    return Object.assign({}, it, { etiqueta, valor: /modelo|c[oó]digo/i.test(etiqueta) ? modelo : valor });
-  }).filter(Boolean).slice(0, 15);
+    if (/modelo|c[oó]digo/i.test(etiqueta)) return Object.assign({}, it, { etiqueta, valor: modelo });
+    return partirDato(it, etiqueta, valor);
+  }).flat().filter(Boolean).slice(0, 15);
 }
 
 async function datosFichaHistorial(ficha, amb, feats) {
