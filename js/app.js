@@ -69,7 +69,7 @@ function datosExtra(lista, principales) {
     if (/^(s[ií]|no)$/i.test(String(d.valor).trim())) return false;
     const et = norm(d.etiqueta);
     // Las medidas y el peso no son características comerciales: solo van en despacho
-    if (/dimension|medida|tamano|peso|largo|ancho|alto|profund/.test(et)) return false;
+    if (/dimension|medida|tamano|peso|largo|ancho|alto|profund|voltaje|frecuencia|tension/.test(et)) return false;
     if (/\d\s*[x×]\s*\d/i.test(String(d.valor))) return false;
     return !palabrasPrincipales.some((w) => et.includes(w));
   });

@@ -120,9 +120,11 @@ function laminaBeneficios(D, idx, fi) {
     E.push(elem("circulo", { x: bx - 125, y: by - 125, w: 250, h: 250, relleno: AZUL, sombra: true }));
     E.push(elem("circulo", { x: bx - 103, y: by - 103, w: 206, h: 206, relleno: BLANCO }));
     const tv = ajustarLinea(MEDIR, dato.valor, 800, 150, 56, 30);
-    E.push(txt({ texto: dato.valor, x: bx - 75, y: by + 4 - tv * 0.95, w: 150, tam: tv, peso: 800, color: AZUL, alin: "center", lh: 1.1 }));
-    const te = fit(dato.etiqueta || "", 400, 150, 50, 22, 16, 1.1);
-    E.push(txt({ texto: dato.etiqueta || "", x: bx - 75, y: (by + 26 + tv * 0.35) - te.tam * 0.95, w: 150, tam: te.tam, peso: 400, color: AZUL, alin: "center", lh: te.lh }));
+    const te = fit(dato.etiqueta || "", 400, 150, 60, 22, 16, 1.1);
+    const altoV = tv * 1.1, altoE = te.lineas.length * te.tam * te.lh;
+    const yV = by - (altoV + 8 + altoE) / 2;
+    E.push(txt({ texto: dato.valor, x: bx - 75, y: yV, w: 150, tam: tv, peso: 800, color: AZUL, alin: "center", lh: 1.1 }));
+    E.push(txt({ texto: dato.etiqueta || "", x: bx - 75, y: yV + altoV + 8, w: 150, tam: te.tam, peso: 400, color: AZUL, alin: "center", lh: te.lh }));
   });
   return { nombre: NOMBRES_LAMINA[idx + 1], fondo: BLANCO, elementos: E };
 }
@@ -178,20 +180,22 @@ function laminaDespacho(D, fi) {
   const porCol = Math.max(1, Math.ceil(items.length / 3));
   const columnasX = [60, 395, 730];
   const yIni = 290, yFin = 1010, alto = (yFin - yIni) / porCol;
-  // Tamaño fijo para que todas las fichas se vean igual de ordenadas, sin importar cuántos datos haya
-  const escala = 1;
-  const ic = Math.round(62 * escala), anchoT = 320 - ic - 20;
+  const ic = 62, anchoT = 320 - ic - 20;
+  // Mismo tamaño de letra para todas las filas: el menor que quepa en todas
+  const tamE = Math.min(28, ...items.map((it) => fit(it.etiqueta, 800, anchoT, alto * 0.5, 28, 18, 1.12).tam));
+  const tamV = Math.min(24, ...items.map((it) => fit(it.valor, 400, anchoT, alto * 0.5, 24, 16, 1.2).tam));
+  // Cada columna se apila según la altura real de sus datos, con la misma separación
+  const cursores = [yIni, yIni, yIni];
   items.forEach((item, i) => {
-    const x = columnasX[Math.floor(i / porCol)], yFila = yIni + (i % porCol) * alto;
-    const et = fit(item.etiqueta, 800, anchoT, alto * 0.45, Math.round(28 * escala), 18, 1.12);
-    const va = fit(item.valor, 400, anchoT, alto * 0.45, Math.round(24 * escala), 16, 1.2);
-    const altoE = et.lineas.length * et.tam * et.lh, altoV = va.lineas.length * va.tam * va.lh;
-    const bloque = Math.max(ic, altoE + 6 + altoV);
-    const y0 = yFila + (alto - bloque) / 2;
-    E.push(elem("icono", { x, y: y0 + (bloque - ic) / 2, w: ic, h: ic, clave: ICONO_DESPACHO[item.icono] || claveIcono(item.etiqueta), color: AZUL }));
-    const yT = y0 + (bloque - (altoE + 6 + altoV)) / 2;
-    E.push(txt({ texto: item.etiqueta, x: x + ic + 20, y: yT, w: anchoT, tam: et.tam, peso: 800, color: AZUL, lh: et.lh }));
-    E.push(txt({ texto: item.valor, x: x + ic + 20, y: yT + altoE + 6, w: anchoT, tam: va.tam, peso: 400, color: AZUL, lh: va.lh }));
+    const col = Math.floor(i / porCol), x = columnasX[col], yFila = cursores[col];
+    const et = fit(item.etiqueta, 800, anchoT, 9999, tamE, tamE, 1.12);
+    const va = fit(item.valor, 400, anchoT, 9999, tamV, tamV, 1.2);
+    const altoE = et.lineas.length * tamE * 1.12;
+    cursores[col] = yFila + Math.max(ic, altoE + 6 + va.lineas.length * tamV * 1.2) + 30;
+    // Todo arriba alineado: icono junto a la primera línea de la etiqueta
+    E.push(elem("icono", { x, y: yFila + tamE * 0.5 - ic / 2, w: ic, h: ic, clave: ICONO_DESPACHO[item.icono] || claveIcono(item.etiqueta), color: AZUL }));
+    E.push(txt({ texto: item.etiqueta, x: x + ic + 20, y: yFila, w: anchoT, tam: tamE, peso: 800, color: AZUL, lh: 1.12 }));
+    E.push(txt({ texto: item.valor, x: x + ic + 20, y: yFila + altoE + 6, w: anchoT, tam: tamV, peso: 400, color: AZUL, lh: 1.2 }));
   });
 
   E.push(productoEl(fi, 760, 1630, 1000));
