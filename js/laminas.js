@@ -177,13 +177,42 @@ function laminaDespacho(D, fi) {
 
   // Especificaciones en 3 columnas, con el mismo tamaño de letra y centradas verticalmente
   const items = D.despacho.slice(0, 15);
-  const porCol = Math.max(1, Math.ceil(items.length / 3));
-  const columnasX = [60, 395, 730];
+  // Pocos datos: menos columnas y más anchas, para que la letra pueda crecer y cubrir la lámina
+  const nCols = items.length <= 3 ? 1 : items.length <= 6 ? 2 : 3;
+  const porCol = Math.ceil(items.length / nCols);
+  const separacion = 1020 / nCols;
+  const columnasX = Array.from({ length: nCols }, (_, c) => 60 + c * separacion);
   const yIni = 290, yFin = 1010, alto = (yFin - yIni) / porCol;
-  const ic = 62, anchoT = 320 - ic - 20;
-  // Mismo tamaño de letra para todas las filas: el menor que quepa en todas
-  const tamE = Math.min(28, ...items.map((it) => fit(it.etiqueta, 800, anchoT, alto * 0.5, 28, 18, 1.12).tam));
-  const tamV = Math.min(24, ...items.map((it) => fit(it.valor, 400, anchoT, alto * 0.5, 24, 16, 1.2).tam));
+  const ic = 62, anchoT = Math.round(separacion - ic - 40);
+  // Con pocos datos la letra crece (hasta 1.8 veces) para cubrir el espacio, sin pasar del alto disponible
+  const alturaColumnas = (s) => {
+    let mayor = 0;
+    for (let col = 0; col < nCols; col++) {
+      const grupo = items.filter((_, i) => Math.floor(i / porCol) === col);
+      if (!grupo.length) continue;
+      const suma = grupo.reduce((a, it) => {
+        const et = fit(it.etiqueta, 800, anchoT, 9999, 28 * s, 28 * s, 1.12);
+        const va = fit(it.valor, 400, anchoT, 9999, 24 * s, 24 * s, 1.2);
+        return a + Math.max(ic, et.lineas.length * 28 * s * 1.12 + 6 + va.lineas.length * 24 * s * 1.2);
+      }, 0) + 24 * (grupo.length - 1);
+      mayor = Math.max(mayor, suma);
+    }
+    return mayor;
+  };
+  // La palabra más larga también debe caber en su columna
+  const anchoPalabra = (s) => {
+    let mayor = 0;
+    items.forEach((it) => {
+      [[it.etiqueta, 800, 28 * s], [it.valor, 400, 24 * s]].forEach(([t, peso, tam]) => {
+        fuente(MEDIR, peso, tam);
+        String(t || "").split(/\s+/).forEach((w) => { mayor = Math.max(mayor, MEDIR.measureText(w).width); });
+      });
+    });
+    return mayor;
+  };
+  let escalaD = 2;
+  while (escalaD > 1 && (alturaColumnas(escalaD) > yFin - yIni || anchoPalabra(escalaD) > anchoT)) escalaD -= 0.05;
+  const tamE = 28 * escalaD, tamV = 24 * escalaD;
   // Se mide cada dato y cada columna se reparte de arriba abajo, ocupando todo el alto disponible
   const medidos = items.map((item, i) => {
     const et = fit(item.etiqueta, 800, anchoT, 9999, tamE, tamE, 1.12);
@@ -191,13 +220,14 @@ function laminaDespacho(D, fi) {
     const altoE = et.lineas.length * tamE * 1.12, altoV = va.lineas.length * tamV * 1.2;
     return { item, et, va, altoE, col: Math.floor(i / porCol), h: Math.max(ic, altoE + 6 + altoV) };
   });
-  for (let col = 0; col < 3; col++) {
+  for (let col = 0; col < nCols; col++) {
     const grupo = medidos.filter((g) => g.col === col);
     if (!grupo.length) continue;
     const sumH = grupo.reduce((a, g) => a + g.h, 0);
-    const gap = grupo.length > 1 ? Math.max(24, Math.min(110, (yFin - yIni - sumH) / (grupo.length - 1))) : 0;
+    const gap = grupo.length > 1 ? Math.max(24, Math.min(400, (yFin - yIni - sumH) / (grupo.length - 1))) : 0;
     const x = columnasX[col];
-    let y = yIni;
+    // Un solo dato en la columna: se centra verticalmente
+    let y = grupo.length === 1 ? yIni + (yFin - yIni - grupo[0].h) / 2 : yIni;
     grupo.forEach((g) => {
       E.push(elem("icono", { x, y: y + tamE * 0.5 - ic / 2, w: ic, h: ic, clave: ICONO_DESPACHO[g.item.icono] || claveIcono(g.item.etiqueta), color: AZUL }));
       E.push(txt({ texto: g.item.etiqueta, x: x + ic + 20, y, w: anchoT, tam: tamE, peso: 800, color: AZUL, lh: 1.12 }));
