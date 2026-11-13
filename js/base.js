@@ -25,7 +25,7 @@ const FICHA_DEMO = {
     { etiqueta: "Marca", valor: "SMC", icono: "tag" },
     { etiqueta: "Modelo", valor: "SMCRF14TMGO", icono: "modelo" },
     { etiqueta: "Código de producto", valor: "22031020012162", icono: "qr" },
-    { etiqueta: "Tipo", valor: "Congelador superior", icono: "tipo" },
+    { etiqueta: "Tipo", valor: "Top Mount", icono: "tipo" },
     { etiqueta: "Tecnología", valor: "Inverter", icono: "tech" },
     { etiqueta: "Eficiencia energética", valor: "Clase A", icono: "energia" },
     { etiqueta: "Capacidad neta", valor: "434 L", icono: "capacidad" },

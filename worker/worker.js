@@ -49,7 +49,7 @@ Reglas:
 - Antes de escribir cada característica, explica su función real en este tipo de producto, no solo repitas el nombre. Glosario de referencia: "Luces indicadoras" = luz de encendido (el equipo está conectado y funcionando) y luz de listo (las placas ya alcanzaron la temperatura para empezar a cocinar). "Control de temperatura automático" = termostato que mantiene la temperatura de cocción sin intervención. "Apagado automático" = el equipo se apaga solo al terminar la cocción o tras un tiempo sin uso. "Placas antiadherentes" = superficie que evita que la comida se pegue.
 - Prohibido usar "permite", "permiten", "permitir" o "te permite" en cualquier texto. Explica con verbos concretos.
 - En "despacho" nunca incluyas almacenamiento, ni "upright", ni nada en inglés. Si hay peso, usa la etiqueta "Peso" con el valor del peso; si no hay peso, no incluyas esa fila.
-- Todo en español, sin palabras en inglés.
+- Todo en español, excepto los nombres comerciales de tipo de producto que se usan así en el mercado (Top Mount, Side by Side, Inverter). No uses palabras en inglés poco comunes en español (por ejemplo, upright): tradúcelas o, si son de almacenamiento, omítelas.
 - Usa el nombre exacto del producto del spec sheet: si es sanduchera o prensa panini, escribe sanduchera, nunca tostadora ni tostador.
 - Prohibido repetir muletillas como "lo que te permite", "esto te permite", "lo que permite" o "permite" en cada texto. Varía la redacción en cada característica.
 - "subtitulos_beneficios" hablan solo de las 2 características de cada lámina, con un tono de venta y sin repetir el título.
