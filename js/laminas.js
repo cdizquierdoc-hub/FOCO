@@ -10,9 +10,9 @@ const COCINAS = [
   "cocina equipada con isla de madera oscura, luz LED cálida y repisas con utensilios de cocina"
 ];
 const LAVANDERIAS = [
-  "cuarto de lavado de una casa, pared lisa de un solo color azul medio, un cesto de mimbre con ropa doblada y un perchero con prendas colgadas, piso liso claro, luz suave, sin electrodomésticos, no es sala",
-  "cuarto de lavado de una casa, pared lisa de un solo color azul medio, un perchero de madera con prendas colgadas y una canasta de ropa, piso liso claro, luz suave, sin electrodomésticos, no es sala",
-  "cuarto de lavado de una casa, pared lisa de un solo color azul medio, un estante de madera con toallas dobladas y un perchero con prendas, piso liso claro, luz suave, sin electrodomésticos, no es sala"
+  "cuarto de lavado minimalista de una casa, paleta de solo dos colores: pared lisa azul medio y blanco, una sola percha de madera con una camisa blanca colgada, piso blanco liso, luz suave, mucho espacio libre, sin electrodomésticos, sin otros objetos, no es sala",
+  "cuarto de lavado minimalista de una casa, paleta de solo dos colores: pared lisa azul medio y blanco, una sola canasta de mimbre clara en el piso, piso blanco liso, luz suave, mucho espacio libre, sin electrodomésticos, sin otros objetos, no es sala",
+  "cuarto de lavado minimalista de una casa, paleta de solo dos colores: pared lisa azul medio y blanco, una barra con dos perchas y prendas blancas, piso blanco liso, luz suave, mucho espacio libre, sin electrodomésticos, sin otros objetos, no es sala"
 ];
 function ambienteSeguro(ficha, descripcion, indice) {
   const cat = ((ficha.categoria || "") + " " + (ficha.modelo || "")).toLowerCase();
