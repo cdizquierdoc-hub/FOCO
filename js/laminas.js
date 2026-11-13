@@ -182,7 +182,7 @@ function laminaDespacho(D, fi) {
   const nFilas = Math.ceil(items.length / nCols);
   const separacion = 1020 / nCols;
   const columnasX = Array.from({ length: nCols }, (_, c) => 60 + c * separacion);
-  const yIni = 290, yFin = 1010, altoFila = (yFin - yIni) / nFilas;
+  const yIni = 215, yFin = 985, altoFila = (yFin - yIni) / nFilas;
   const ic = 62, anchoT = Math.round(separacion - ic - 40);
   const medirItem = (it, s) => {
     const et = fit(it.etiqueta, 800, anchoT, 9999, 28 * s, 28 * s, 1.12);
@@ -213,7 +213,7 @@ function laminaDespacho(D, fi) {
     E.push(txt({ texto: item.etiqueta, x: x + ic + 20, y, w: anchoT, tam: tamE, peso: 800, color: AZUL, lh: 1.12 }));
     E.push(txt({ texto: item.valor, x: x + ic + 20, y: y + m.altoE + 6, w: anchoT, tam: tamV, peso: 400, color: AZUL, lh: 1.2 }));
   });
-  E.push(productoEl(fi, 760, 1630, 1000));
+  E.push(productoEl(fi, 860, 1560, 1030));
 
   // Píldoras de garantía, más pequeñas para no tapar el producto. La de 10 años solo si es inverter
   const pastillas = [{ y: 420, n: "1 AÑO", t: ["de garantía en todo el producto", "Repuestos + mano de obra."] }];
