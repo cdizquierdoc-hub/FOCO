@@ -212,13 +212,13 @@ async function imagenWorkersAI(ambiente, env, cors) {
   if (!env.AI) return json({ error: "Falta el binding AI (Workers AI) en el Worker" }, 500, cors);
   const esLavanderia = /lavand|lavad|secad|plancha|ropa/i.test(ambiente);
   const prompt = esLavanderia
-    ? "Fotografía minimalista de un rincón de casa con pared lisa de un solo color azul medio, solo ropa, canastas de ropa, perchas y toallas, piso liso claro, luz suave, sin electrodomésticos, sin aparatos, sin máquinas, espacio despejado a la derecha para colocar un producto, sin personas, sin texto, enfoque nítido y realista. " + ambiente
+    ? "Fotografía minimalista de un cuarto de lavado de una casa con pared lisa de un solo color azul medio, solo ropa, canastas de ropa, perchas y toallas, piso liso claro, luz suave, sin electrodomésticos, sin aparatos, sin máquinas, espacio despejado a la derecha para colocar un producto, sin personas, sin texto, enfoque nítido y realista. " + ambiente
     : "Fotografía profesional de la pared frontal del interior descrito, luminoso, espacio libre y piso despejado frente a la pared, sin isla, sin mesa, sin barra, " +
     "horizontal, de borde a borde, " +
     "iluminación cálida y elegante, enfoque nítido y realista. " +
     "Sin personas, sin electrodomésticos, sin texto ni logotipos, sin bordes ni márgenes. " +
     "Espacio despejado en el centro y a la derecha para colocar un producto. Escena residencial interior, sin producto, que corresponda al tipo de producto: " + ambiente;
-  const negativo = (esLavanderia ? "lavadora, secadora, electrodoméstico, aparato, máquina, cuarto vacío, bodega, almacén, warehouse, galpón, concreto, cocina, estufa, fregadero, encimera de mármol, " : "") + "isla de cocina, mesa en primer plano, encimera en primer plano, barra, taburetes, perspectiva diagonal, cruce de mesa, oscuro, muy oscuro, sala de estar, sofá, sillón, living, televisor, mueble de TV, comedor de sala, estantería de libros, chimenea, dormitorio, cama, sofá, sala de estar, habitación, cuarto, oficina, baño, bañera, tina, ducha, lavabo, azulejos de baño, espejo de baño, " +
+  const negativo = (esLavanderia ? "sala, sofá, sillón, living, mesa de centro, comedor, cama, dormitorio, lavadora, secadora, electrodoméstico, aparato, máquina, cuarto vacío, estudio, pared de concreto, bodega, almacén, warehouse, galpón, concreto, cocina, estufa, fregadero, encimera de mármol, " : "") + "isla de cocina, mesa en primer plano, encimera en primer plano, barra, taburetes, perspectiva diagonal, cruce de mesa, oscuro, muy oscuro, sala de estar, sofá, sillón, living, televisor, mueble de TV, comedor de sala, estantería de libros, chimenea, dormitorio, cama, sofá, sala de estar, habitación, cuarto, oficina, baño, bañera, tina, ducha, lavabo, azulejos de baño, espejo de baño, " +
     "personas, gente, texto, letras, logotipo, marca de agua, calle, ciudad, exterior, " +
     "edificio urbano, vista a la calle, autos, borroso, dibujo, caricatura, ilustración, collage, " +
     "marco, bordes, distorsionado, electrodoméstico, refrigeradora, lavadora";

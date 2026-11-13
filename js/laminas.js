@@ -10,14 +10,14 @@ const COCINAS = [
   "cocina equipada con isla de madera oscura, luz LED cálida y repisas con utensilios de cocina"
 ];
 const LAVANDERIAS = [
-  "rincón de casa minimalista con pared lisa de un solo color azul medio, un cesto de mimbre con ropa doblada y un perchero con prendas colgadas, piso liso claro, luz suave, sin electrodomésticos",
-  "rincón de casa minimalista con pared lisa de un solo color azul medio, un perchero con prendas colgadas y una canasta de ropa, piso liso claro, luz suave, sin electrodomésticos",
-  "rincón de casa minimalista con pared lisa de un solo color azul medio, un estante con toallas dobladas y un perchero con prendas, piso liso claro, luz suave, sin electrodomésticos"
+  "cuarto de lavado de una casa, pared lisa de un solo color azul medio, un cesto de mimbre con ropa doblada y un perchero con prendas colgadas, piso liso claro, luz suave, sin electrodomésticos, no es sala",
+  "cuarto de lavado de una casa, pared lisa de un solo color azul medio, un perchero de madera con prendas colgadas y una canasta de ropa, piso liso claro, luz suave, sin electrodomésticos, no es sala",
+  "cuarto de lavado de una casa, pared lisa de un solo color azul medio, un estante de madera con toallas dobladas y un perchero con prendas, piso liso claro, luz suave, sin electrodomésticos, no es sala"
 ];
 function ambienteSeguro(ficha, descripcion, indice) {
   const cat = ((ficha.categoria || "") + " " + (ficha.modelo || "")).toLowerCase();
   if (/refri|congela|nevera|frigor|rf\d/.test(cat)) return COCINAS[indice] + ", vista frontal de la pared de la cocina, espacio libre y piso despejado frente al producto, sin isla ni mesa, iluminación luminosa";
-  if (/lavad|secad|plancha|ropa/.test(cat)) return LAVANDERIAS[indice];
+  if (/lavad|secad|plancha|ropa/.test(cat)) return LAVANDERIAS[indice % LAVANDERIAS.length];
   return descripcion;
 }
 
