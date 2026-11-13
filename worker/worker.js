@@ -210,12 +210,14 @@ async function imagen(body, env, cors) {
 async function imagenWorkersAI(ambiente, env, cors) {
   if (!env.AI) return json({ error: "Falta el binding AI (Workers AI) en el Worker" }, 500, cors);
   const esLavanderia = /lavand|lavad|secad|plancha|ropa/i.test(ambiente);
-  const prompt = "Fotografía profesional de la pared frontal del interior descrito, luminoso, espacio libre y piso despejado frente a la pared, sin isla, sin mesa, sin barra, " +
+  const prompt = esLavanderia
+    ? "Fotografía profesional de un cuarto de lavandería de una casa residencial, con lavadora y secadora de carga frontal, cesto de ropa, estantes con productos de limpieza y una tabla de planchar plegada, piso de cerámica, luz natural cálida, espacio despejado a la derecha para colocar un producto, sin personas, sin texto, enfoque nítido y realista. " + ambiente
+    : "Fotografía profesional de la pared frontal del interior descrito, luminoso, espacio libre y piso despejado frente a la pared, sin isla, sin mesa, sin barra, " +
     "horizontal, de borde a borde, " +
     "iluminación cálida y elegante, enfoque nítido y realista. " +
     "Sin personas, sin electrodomésticos, sin texto ni logotipos, sin bordes ni márgenes. " +
     "Espacio despejado en el centro y a la derecha para colocar un producto. Escena residencial interior, sin producto, que corresponda al tipo de producto: " + ambiente;
-  const negativo = (esLavanderia ? "cocina, estufa, fregadero, encimera de mármol, " : "") + "isla de cocina, mesa en primer plano, encimera en primer plano, barra, taburetes, perspectiva diagonal, cruce de mesa, oscuro, muy oscuro, sala de estar, sofá, sillón, living, televisor, mueble de TV, comedor de sala, estantería de libros, chimenea, dormitorio, cama, sofá, sala de estar, habitación, cuarto, oficina, baño, bañera, tina, ducha, lavabo, azulejos de baño, espejo de baño, " +
+  const negativo = (esLavanderia ? "cuarto vacío, vacío, bodega, almacén, warehouse, galpón, concreto, sin muebles, cocina, estufa, fregadero, encimera de mármol, " : "") + "isla de cocina, mesa en primer plano, encimera en primer plano, barra, taburetes, perspectiva diagonal, cruce de mesa, oscuro, muy oscuro, sala de estar, sofá, sillón, living, televisor, mueble de TV, comedor de sala, estantería de libros, chimenea, dormitorio, cama, sofá, sala de estar, habitación, cuarto, oficina, baño, bañera, tina, ducha, lavabo, azulejos de baño, espejo de baño, " +
     "personas, gente, texto, letras, logotipo, marca de agua, calle, ciudad, exterior, " +
     "edificio urbano, vista a la calle, autos, borroso, dibujo, caricatura, ilustración, collage, " +
     "marco, bordes, distorsionado, electrodoméstico, refrigeradora, lavadora";

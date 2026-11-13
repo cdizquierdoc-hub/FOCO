@@ -10,9 +10,9 @@ const COCINAS = [
   "cocina equipada con isla de madera oscura, luz LED cálida y repisas con utensilios de cocina"
 ];
 const LAVANDERIAS = [
-  "interior de lavandería moderna, gabinetes claros, piso de cerámica y luz cálida",
-  "interior de lavandería moderna con repisas de madera y luz natural cálida",
-  "interior de lavandería moderna con encimera blanca y plantas"
+  "cuarto de lavandería de una casa, con lavadora y secadora, cesto de ropa, estantes con productos de limpieza, piso de cerámica y luz natural cálida",
+  "cuarto de lavandería de una casa, con lavadora de carga frontal, tabla de planchar, ropa doblada en repisas de madera y luz cálida",
+  "cuarto de lavandería de una casa con lavadora, secadora, plantas, cesto de ropa y ventana con luz natural"
 ];
 function ambienteSeguro(ficha, descripcion, indice) {
   const cat = ((ficha.categoria || "") + " " + (ficha.modelo || "")).toLowerCase();
