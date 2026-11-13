@@ -34,7 +34,7 @@ Lee el spec sheet y responde SOLO con un objeto JSON válido (sin texto extra, s
     "beneficios_3_4": "ambiente SIN producto para las características 3 y 4"
   },
   "subtitulos_beneficios": ["2 frases que resumen las características 1 y 2 juntas y su beneficio para el cliente", "2 frases que resumen las características 3 y 4 juntas y su beneficio para el cliente"],
-  "beneficios": [ { "titulo": "...", "corto": "de 10 a 14 palabras que explican brevemente qué es o qué hace la característica, por ejemplo: Luz de encendido y luz de listo que indican el estado del equipo.", "texto": "de 22 a 30 palabras en 2 o 3 frases muy técnicas: nombra el componente o tecnología concreta (compresor inverter, sensor, ciclo de refrigeración, tipo de placa, material), su medida o nivel si el spec sheet lo trae, y qué logra el cliente" } ],
+  "beneficios": [ { "titulo": "...", "corto": "de 10 a 14 palabras que explican brevemente qué es o qué hace la característica, por ejemplo: Luz de encendido y luz de listo que indican el estado del equipo.", "texto": "de 20 a 26 palabras en 2 o 3 frases muy técnicas: nombra el componente o tecnología concreta (compresor inverter, sensor, ciclo de refrigeración, tipo de placa, material), su medida o nivel si el spec sheet lo trae, y qué logra el cliente" } ],
   "datos_destacados": [ { "valor": "43 dB", "etiqueta": "Nivel de ruido" } ],
   "despacho": [ { "etiqueta": "...", "valor": "...", "icono": "..." } ]
 }

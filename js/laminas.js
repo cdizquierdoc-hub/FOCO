@@ -103,7 +103,7 @@ function laminaBeneficios(D, idx, fi) {
     const topA = y + 62 + 16, AH = CH - 62 - 32;
     const tit = fit(b.titulo, 800, CW - 60, 90, 40, 26, 1.1);
     const hT = tit.lineas.length * tit.tam * tit.lh;
-    const tx = capPalabras(b.texto, 30);
+    const tx = capPalabras(b.texto, 26);
     const cu = fit(tx, 400, CW - 60, AH - hT - 14, 26, 22, 1.3);
     const hC = cu.lineas.length * cu.tam * cu.lh;
     const yT = topA + (AH - hT - 14 - hC) / 2;
