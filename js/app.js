@@ -68,6 +68,9 @@ function datosExtra(lista, principales) {
     if (!d || !String(d.valor || "").trim()) return false;
     if (/^(s[ií]|no)$/i.test(String(d.valor).trim())) return false;
     const et = norm(d.etiqueta);
+    // Las medidas y el peso no son características comerciales: solo van en despacho
+    if (/dimension|medida|tamano|peso|largo|ancho|alto|profund/.test(et)) return false;
+    if (/\d\s*[x×]\s*\d/i.test(String(d.valor))) return false;
     return !palabrasPrincipales.some((w) => et.includes(w));
   });
   // El espacio del refrigerador va siempre junto al del congelador; si falta uno, se usa la capacidad total
