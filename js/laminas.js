@@ -177,27 +177,18 @@ function laminaDespacho(D, fi) {
 
   // Especificaciones en 3 columnas, con el mismo tamaño de letra y centradas verticalmente
   const items = D.despacho.slice(0, 15);
-  // Pocos datos: menos columnas y más anchas, para que la letra pueda crecer y cubrir la lámina
-  const nCols = items.length <= 3 ? 1 : items.length <= 6 ? 2 : 3;
-  const porCol = Math.ceil(items.length / nCols);
+  // Cuadrícula ordenada: filas y columnas alineadas, se lee de izquierda a derecha y de arriba abajo
+  const nCols = items.length <= 2 ? 1 : items.length <= 4 ? 2 : 3;
+  const nFilas = Math.ceil(items.length / nCols);
   const separacion = 1020 / nCols;
   const columnasX = Array.from({ length: nCols }, (_, c) => 60 + c * separacion);
-  const yIni = 290, yFin = 1010, alto = (yFin - yIni) / porCol;
+  const yIni = 290, yFin = 1010, altoFila = (yFin - yIni) / nFilas;
   const ic = 62, anchoT = Math.round(separacion - ic - 40);
-  // Con pocos datos la letra crece (hasta 1.8 veces) para cubrir el espacio, sin pasar del alto disponible
-  const alturaColumnas = (s) => {
-    let mayor = 0;
-    for (let col = 0; col < nCols; col++) {
-      const grupo = items.filter((_, i) => Math.floor(i / porCol) === col);
-      if (!grupo.length) continue;
-      const suma = grupo.reduce((a, it) => {
-        const et = fit(it.etiqueta, 800, anchoT, 9999, 28 * s, 28 * s, 1.12);
-        const va = fit(it.valor, 400, anchoT, 9999, 24 * s, 24 * s, 1.2);
-        return a + Math.max(ic, et.lineas.length * 28 * s * 1.12 + 6 + va.lineas.length * 24 * s * 1.2);
-      }, 0) + 24 * (grupo.length - 1);
-      mayor = Math.max(mayor, suma);
-    }
-    return mayor;
+  const medirItem = (it, s) => {
+    const et = fit(it.etiqueta, 800, anchoT, 9999, 28 * s, 28 * s, 1.12);
+    const va = fit(it.valor, 400, anchoT, 9999, 24 * s, 24 * s, 1.2);
+    const altoE = et.lineas.length * 28 * s * 1.12, altoV = va.lineas.length * 24 * s * 1.2;
+    return { et, va, altoE, altoV, h: Math.max(ic, altoE + 6 + altoV) };
   };
   // La palabra más larga también debe caber en su columna
   const anchoPalabra = (s) => {
@@ -210,31 +201,18 @@ function laminaDespacho(D, fi) {
     });
     return mayor;
   };
+  // La letra crece lo necesario para llenar la celda, sin pasar del alto de fila ni del ancho de columna
   let escalaD = 2;
-  while (escalaD > 1 && (alturaColumnas(escalaD) > yFin - yIni || anchoPalabra(escalaD) > anchoT)) escalaD -= 0.05;
+  while (escalaD > 1 && (items.some((it) => medirItem(it, escalaD).h > altoFila - 24) || anchoPalabra(escalaD) > anchoT)) escalaD -= 0.05;
   const tamE = 28 * escalaD, tamV = 24 * escalaD;
-  // Se mide cada dato y cada columna se reparte de arriba abajo, ocupando todo el alto disponible
-  const medidos = items.map((item, i) => {
-    const et = fit(item.etiqueta, 800, anchoT, 9999, tamE, tamE, 1.12);
-    const va = fit(item.valor, 400, anchoT, 9999, tamV, tamV, 1.2);
-    const altoE = et.lineas.length * tamE * 1.12, altoV = va.lineas.length * tamV * 1.2;
-    return { item, et, va, altoE, col: Math.floor(i / porCol), h: Math.max(ic, altoE + 6 + altoV) };
+  items.forEach((item, i) => {
+    const x = columnasX[i % nCols], fila = Math.floor(i / nCols);
+    const m = medirItem(item, escalaD);
+    const y = yIni + fila * altoFila + (altoFila - m.h) / 2;
+    E.push(elem("icono", { x, y: y + tamE * 0.5 - ic / 2, w: ic, h: ic, clave: ICONO_DESPACHO[item.icono] || claveIcono(item.etiqueta), color: AZUL }));
+    E.push(txt({ texto: item.etiqueta, x: x + ic + 20, y, w: anchoT, tam: tamE, peso: 800, color: AZUL, lh: 1.12 }));
+    E.push(txt({ texto: item.valor, x: x + ic + 20, y: y + m.altoE + 6, w: anchoT, tam: tamV, peso: 400, color: AZUL, lh: 1.2 }));
   });
-  for (let col = 0; col < nCols; col++) {
-    const grupo = medidos.filter((g) => g.col === col);
-    if (!grupo.length) continue;
-    const sumH = grupo.reduce((a, g) => a + g.h, 0);
-    const gap = grupo.length > 1 ? Math.max(24, Math.min(400, (yFin - yIni - sumH) / (grupo.length - 1))) : 0;
-    const x = columnasX[col];
-    // Un solo dato en la columna: se centra verticalmente
-    let y = grupo.length === 1 ? yIni + (yFin - yIni - grupo[0].h) / 2 : yIni;
-    grupo.forEach((g) => {
-      E.push(elem("icono", { x, y: y + tamE * 0.5 - ic / 2, w: ic, h: ic, clave: ICONO_DESPACHO[g.item.icono] || claveIcono(g.item.etiqueta), color: AZUL }));
-      E.push(txt({ texto: g.item.etiqueta, x: x + ic + 20, y, w: anchoT, tam: tamE, peso: 800, color: AZUL, lh: 1.12 }));
-      E.push(txt({ texto: g.item.valor, x: x + ic + 20, y: y + g.altoE + 6, w: anchoT, tam: tamV, peso: 400, color: AZUL, lh: 1.2 }));
-      y += g.h + gap;
-    });
-  }
   E.push(productoEl(fi, 760, 1630, 1000));
 
   // Píldoras de garantía, más pequeñas para no tapar el producto. La de 10 años solo si es inverter
