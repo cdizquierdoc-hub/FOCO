@@ -50,6 +50,7 @@ Reglas:
 - Prohibido usar "permite", "permiten", "permitir" o "te permite" en cualquier texto. Explica con verbos concretos.
 - En "despacho" nunca incluyas almacenamiento, ni "upright", ni nada en inglés. Si hay peso, usa la etiqueta "Peso" con el valor del peso; si no hay peso, no incluyas esa fila.
 - Prohibido en cualquier texto: grill, ribbed, non-stick, knob, yes, no, premium y toda palabra en inglés que no sea nombre comercial. Usa en su lugar "placas acanaladas" o "antiadherentes".
+- El spec sheet puede venir en inglés: tradúcelo todo al español (ej. Rated Power = Potencia; Plate Coating = Recubrimiento antiadherente; Opening Angles = Ángulo de apertura; Drip Tray = Bandeja recolectora de grasa; Cool-touch handle = Mango antiquemaduras; Product Type = tipo de producto). Si un dato dice "Not specified", omítelo.
 - Todo en español, excepto los nombres comerciales de tipo de producto que se usan así en el mercado (Top Mount, Side by Side, Inverter). No uses palabras en inglés poco comunes en español (por ejemplo, upright): tradúcelas o, si son de almacenamiento, omítelas.
 - Usa el nombre exacto del producto del spec sheet: si es sanduchera o prensa panini, escribe sanduchera, nunca tostadora ni tostador.
 - Prohibido repetir muletillas como "lo que te permite", "esto te permite", "lo que permite" o "permite" en cada texto. Varía la redacción en cada característica.

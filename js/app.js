@@ -66,7 +66,9 @@ function datosExtra(lista, principales) {
   const palabrasPrincipales = principales.join(" ").split(/\s+/).map(norm).filter((w) => w.length > 3);
   let datos = (lista || []).filter((d) => {
     if (!d || !String(d.valor || "").trim()) return false;
-    if (/^(s[ií]|no|yes)$/i.test(String(d.valor).trim())) return false;
+    const vt = String(d.valor).trim();
+    if (/^(s[ií]|no|yes)(\W|$)/i.test(vt) && vt.length < 60) return false;
+    if (/not specified|no especificad/i.test(vt)) return false;
     const et = norm(d.etiqueta);
     // Las medidas y el peso no son características comerciales: solo van en despacho
     if (/dimension|medida|tamano|peso|largo|ancho|alto|profund|voltaje|frecuencia|tension/.test(et)) return false;
@@ -169,7 +171,7 @@ function limpiarDespacho(lista, modelo) {
     if (!it) return null;
     let etiqueta = String(it.etiqueta || ""), valor = String(it.valor || "");
     if (/almacen/i.test(etiqueta)) return null;
-    if (/no especificad|no aplica|no disponible|^n\/?a$|^-+$/i.test(valor.trim())) return null;
+    if (/no especificad|not specified|no aplica|no disponible|^n\/?a$|^none$|^-+$/i.test(valor.trim())) return null;
     valor = valor.replace(/upright|almacenamiento/gi, "").replace(/\n\s*\n/g, "\n").trim();
     if (/peso/i.test(etiqueta)) etiqueta = "Peso";
     if (!valor) return null;
