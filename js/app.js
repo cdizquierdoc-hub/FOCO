@@ -64,12 +64,18 @@ async function obtenerAmbiente(tipo, descripcion) {
 function datosExtra(lista, principales) {
   const norm = (t) => String(t || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
   const palabrasPrincipales = principales.join(" ").split(/\s+/).map(norm).filter((w) => w.length > 3);
-  return (lista || []).filter((d) => {
+  let datos = (lista || []).filter((d) => {
     if (!d || !String(d.valor || "").trim()) return false;
     if (/^(s[ií]|no)$/i.test(String(d.valor).trim())) return false;
     const et = norm(d.etiqueta);
     return !palabrasPrincipales.some((w) => et.includes(w));
-  }).slice(0, 4);
+  });
+  // El espacio del refrigerador va siempre junto al del congelador; si falta uno, se usa la capacidad total
+  const esRefri = (d) => /refrigerad/.test(norm(d.etiqueta)), esCongel = (d) => /congelad/.test(norm(d.etiqueta));
+  const refri = datos.find(esRefri), congel = datos.find(esCongel);
+  datos = datos.filter((d) => !esRefri(d) && !esCongel(d));
+  if (refri && congel) datos = [refri, congel, ...datos];
+  return datos.slice(0, 4);
 }
 
 /* Aplica el nombre de la marca a los textos de la ficha que vienen de la IA */
@@ -118,24 +124,10 @@ async function generar() {
       obtenerAmbiente("c4", ambienteSeguro(ficha, esc.portada, 3))
     ]);
     log("Armando las 7 láminas...");
-    const D = {
-      modelo: ficha.modelo,
-      tipo: ficha.tipo || ficha.categoria || "",
-      inverter: !!ficha.inverter,
-      subtitulo: ficha.subtitulo_ficha || "",
-      portada: ficha.portada || FICHA_DEMO.portada,
-      beneficios: estado.feats.map((f, i) => ({ titulo: f.trim(), texto: (ficha.beneficios && ficha.beneficios[i] && ficha.beneficios[i].texto) || "", corto: (ficha.beneficios && ficha.beneficios[i] && ficha.beneficios[i].corto) || "" })),
-      subtitulos: ficha.subtitulos_beneficios || [],
-      datos: datosExtra(ficha.datos_destacados, estado.feats),
-      despacho: (ficha.despacho || []).slice(0, 15).map((it) => (/modelo|c[oó]digo/i.test(it.etiqueta || "") ? Object.assign({}, it, { valor: ficha.modelo }) : it)),
-      ambientes: { portada, b1, b2, c4 },
-      logo: estado.logo
-    };
-    estado.modelo = D.modelo;
-    await document.fonts.ready;
-    editor.slides = construirLaminas(D);
-    editor.actual = 0; editor.selId = null; editor.historial = [];
-    mostrarEditor();
+    const amb = { portada, b1, b2, c4 };
+    const feats = estado.feats.slice();
+    await montarFicha(ficha, amb, feats);
+    guardarEnHistorial("ficha", ficha.modelo || "Producto", await datosFichaHistorial(ficha, amb, feats));
     log("Listo. Ajusta las láminas en el editor y descarga PDF o PowerPoint.");
   } catch (e) {
     error("Error: " + e.message);
@@ -144,6 +136,51 @@ async function generar() {
     $("barra").classList.remove("on");
     validar();
   }
+}
+
+/* Arma las láminas a partir de la ficha ya lista (se usa al generar y al restaurar una versión) */
+async function montarFicha(ficha, amb, feats) {
+  const D = {
+    modelo: ficha.modelo,
+    tipo: ficha.tipo || ficha.categoria || "",
+    inverter: !!ficha.inverter,
+    subtitulo: ficha.subtitulo_ficha || "",
+    portada: ficha.portada || FICHA_DEMO.portada,
+    beneficios: feats.map((f, i) => ({ titulo: f.trim(), texto: (ficha.beneficios && ficha.beneficios[i] && ficha.beneficios[i].texto) || "", corto: (ficha.beneficios && ficha.beneficios[i] && ficha.beneficios[i].corto) || "" })),
+    subtitulos: ficha.subtitulos_beneficios || [],
+    datos: datosExtra(ficha.datos_destacados, feats),
+    despacho: (ficha.despacho || []).slice(0, 15).map((it) => (/modelo|c[oó]digo/i.test(it.etiqueta || "") ? Object.assign({}, it, { valor: ficha.modelo }) : it)),
+    ambientes: amb,
+    logo: estado.logo
+  };
+  estado.modelo = D.modelo;
+  await document.fonts.ready;
+  editor.slides = construirLaminas(D);
+  editor.actual = 0; editor.selId = null; editor.historial = [];
+  mostrarEditor();
+}
+
+async function datosFichaHistorial(ficha, amb, feats) {
+  return {
+    ficha, feats, marca: marcaSeleccionada(),
+    ambientes: Object.fromEntries(Object.entries(amb).map(([k, img]) => [k, imagenAURL(img, 1344, "image/jpeg")])),
+    fotos: estado.productos.map((c) => c.toDataURL("image/png"))
+  };
+}
+
+/* Restaura una versión guardada de la ficha para corregirla en el editor */
+async function restaurarFicha(d) {
+  if (d.marca !== marcaSeleccionada()) return error("Esta versión es de la marca " + MARCAS[d.marca].nombre + ". Cambia la marca para restaurarla.");
+  error(""); log("Restaurando la versión guardada...");
+  try {
+    const imgs = await Promise.all(d.fotos.map((src) => cargarImagen(src)));
+    fijarProductos(imgs.map(canvasDe), null);
+    const amb = {};
+    for (const k of Object.keys(d.ambientes)) amb[k] = await cargarImagen(d.ambientes[k]);
+    d.feats.forEach((t, i) => { $("f" + i).value = t; estado.feats[i] = t; });
+    await montarFicha(d.ficha, amb, d.feats.slice());
+    log("Versión restaurada. Puedes corregirla en el editor.");
+  } catch (e) { error("No se pudo restaurar la versión: " + e.message); }
 }
 
 function mostrarEditor() {
@@ -297,6 +334,7 @@ async function iniciar() {
   estado.logo = await cargarImagen(MARCAS[marcaSeleccionada()].logo);
   await precargarIconos();
   iniciarEditor();
+  actualizarHistorial();
   try { $("urlWorker").value = localStorage.getItem("smc_worker_url") || $("urlWorker").value; } catch (e) { /* sin almacenamiento */ }
 }
 iniciar().then(validar).catch((e) => error("No se pudieron cargar los recursos: " + e.message));

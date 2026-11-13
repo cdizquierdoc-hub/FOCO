@@ -47,38 +47,57 @@ function laminaPortada(D, fi) {
   return { nombre: NOMBRES_LAMINA[0], fondo: BLANCO, elementos: E };
 }
 
+/* Los datos de cada lámina: el espacio del refrigerador va con el del congelador, y la eficiencia
+   (Clase A) solo aparece en la lámina del motor inverter / ahorro de energía */
+const ENERGIA_RE = /inverter|energ|compresor|motor|consumo|eficien/i;
+function datosDeLamina(D, idx) {
+  const esEnergia = (i) => D.beneficios.slice(i * 2, i * 2 + 2).some((b) => ENERGIA_RE.test(b.titulo + " " + b.texto));
+  const eficiencia = D.datos.filter((d) => /eficien|clase/i.test(d.etiqueta || ""));
+  const pareja = D.datos.filter((d) => /refrigerad|congelad/i.test(d.etiqueta || "") && !/eficien|clase/i.test(d.etiqueta || ""));
+  const otros = D.datos.filter((d) => !/eficien|clase|refrigerad|congelad/i.test(d.etiqueta || ""));
+  const energiaIdx = [0, 1].find(esEnergia);
+  if (energiaIdx === undefined) {
+    const lista = [...pareja, ...otros];
+    return [lista[idx * 2], lista[idx * 2 + 1]];
+  }
+  // La eficiencia va en la lámina del motor inverter; el par del refrigerador y congelador va en la otra
+  if (idx === energiaIdx) return [eficiencia[0], otros[0]];
+  return [...pareja, ...otros.slice(1)].slice(0, 2);
+}
+
 function laminaBeneficios(D, idx, fi) {
   const amb = idx === 0 ? D.ambientes.b1 : D.ambientes.b2;
   const E = [panelChevron(amb)];
-  E.push(productoEl(fi, 860, 1600, 1010));
+  E.push(productoEl(fi, 860, 1540, 1010));
 
   const enc = encabezadoFicha(D);
   const e = fit(enc, 800, 680, 60, 40, 24, 1.2);
   E.push(txt({ texto: enc, x: 90, y: 110 - e.tam * 0.95, w: 680, tam: e.tam, peso: 800, color: AZUL, lh: 1.2 }));
   // Subtítulo propio de estas dos características, que llena el espacio superior
   const subT = (D.subtitulos && D.subtitulos[idx]) || D.subtitulo || "Tecnología, frescura y comodidad en un solo lugar.";
-  const sub = fit(subT, 600, 680, 100, 34, 20, 1.2);
-  E.push(txt({ texto: subT, x: 90, y: 150, w: 680, tam: sub.tam, peso: 600, color: AZUL, lh: 1.2 }));
+  const sub = fit(subT, 600, 680, 70, 30, 20, 1.2);
+  E.push(txt({ texto: subT, x: 90, y: 140, w: 680, tam: sub.tam, peso: 600, color: AZUL, lh: 1.2 }));
   E.push(txt({ texto: "BENEFICIOS:", x: 90, y: 262 - 28 * 0.95, w: 640, tam: 28, peso: 800, color: AZUL, alin: "center" }));
 
   // Detalle técnico de cada característica (aquí sí cabe más texto)
-  const X = 90, CW = 640, CH = 320, ys = [330, 720];
+  const X = 90, CW = 640, CH = 300, ys = [350, 720];
   D.beneficios.slice(idx * 2, idx * 2 + 2).forEach((b, i) => {
     const y = ys[i], cx = X + CW / 2;
     E.push(elem("rect", { x: X, y, w: CW, h: CH, radio: 46, relleno: BLANCO, borde: { color: AZUL, ancho: 3 } }));
     E.push(elem("circulo", { x: cx - 62, y: y - 62, w: 124, h: 124, relleno: AZUL }));
     E.push(elem("icono", { x: cx - 44, y: y - 44, w: 88, h: 88, clave: D.iconos[idx * 2 + i], color: BLANCO }));
     const tit = fit(b.titulo, 800, CW - 60, 100, 40, 26, 1.1);
-    const yT = y + 62 + 30;
+    const yT = y + 62 + 22;
     E.push(txt({ texto: b.titulo, x: X + 30, y: yT, w: CW - 60, tam: tit.tam, peso: 800, color: AZUL, alin: "center", lh: tit.lh }));
     const hT = tit.lineas.length * tit.tam * tit.lh;
-    const cu = fit(b.texto, 400, CW - 60, CH - (62 + 30 + hT + 30), 26, 18, 1.3);
-    E.push(txt({ texto: b.texto, x: X + 30, y: yT + hT + 14, w: CW - 60, tam: cu.tam, peso: 400, color: AZUL, alin: "center", lh: cu.lh }));
+    const cu = fit(b.texto, 400, CW - 60, CH - (62 + 22 + hT + 26), 26, 22, 1.3);
+    E.push(txt({ texto: b.texto, x: X + 30, y: yT + hT + 10, w: CW - 60, tam: cu.tam, peso: 400, color: AZUL, alin: "center", lh: cu.lh }));
   });
 
   // Cifras de características adicionales (no son las 4 principales), dos por lámina
+  const datosLamina = datosDeLamina(D, idx);
   [0, 1].forEach((i) => {
-    const dato = D.datos[idx * 2 + i];
+    const dato = datosLamina[i];
     if (!dato || !dato.valor) return;
     const bx = 1760, by = i === 0 ? 250 : 800;
     E.push(elem("circulo", { x: bx - 125, y: by - 125, w: 250, h: 250, relleno: AZUL, sombra: true }));

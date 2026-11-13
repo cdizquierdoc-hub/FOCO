@@ -457,13 +457,13 @@ async function generarCorreo() {
     const ambiente = await ambienteCorreoImagen(productos[0].categoria);
     logCorreo("Armando el correo...");
     const logos = await cargarLogosCorreo(CADENAS_CORREO[$("cCadena").value].logos);
-    correoSlide = construirCorreo({
-      productos,
-      ambiente,
-      logoSMC: estado.logo,
-      logos,
-      intro: $("cIntro").value.trim() || textoIntroCorreo(productos),
-      final: $("cFinal").value.trim() || finalCorreo()
+    const introC = $("cIntro").value.trim() || textoIntroCorreo(productos);
+    const finalC = $("cFinal").value.trim() || finalCorreo();
+    correoSlide = construirCorreo({ productos, ambiente, logoSMC: estado.logo, logos, intro: introC, final: finalC });
+    guardarEnHistorial("correo", productos.map((p) => p.modelo).join(" + "), {
+      productos: productos.map((p) => ({ tipo: p.tipo, modelo: p.modelo, categoria: p.categoria, feats: p.feats, foto: p.foto.toDataURL("image/png") })),
+      ambiente: imagenAURL(ambiente, 1344, "image/jpeg"),
+      cadena: $("cCadena").value, marca: marcaSeleccionada(), intro: introC, final: finalC
     });
     $("cEditar").hidden = false;
     abrirEditorCorreo();
@@ -475,6 +475,26 @@ async function generarCorreo() {
     $("cBarra").classList.remove("on");
     $("cGen").disabled = false;
   }
+}
+
+/* Restaura una versión guardada del correo para corregirla en el editor */
+async function restaurarCorreo(d) {
+  if (d.marca !== marcaSeleccionada()) return errorCorreo("Esta versión es de la marca " + MARCAS[d.marca].nombre + ". Cambia la marca para restaurarla.");
+  errorCorreo(""); logCorreo("Restaurando la versión guardada...");
+  try {
+    const productos = [];
+    for (const p of d.productos) {
+      const img = await cargarImagen(p.foto);
+      productos.push({ foto: canvasDe(img), tipo: p.tipo, modelo: p.modelo, categoria: p.categoria, feats: p.feats });
+    }
+    const ambiente = await cargarImagen(d.ambiente);
+    const logos = await cargarLogosCorreo(CADENAS_CORREO[d.cadena].logos);
+    $("cIntro").value = d.intro; $("cFinal").value = d.final;
+    correoSlide = construirCorreo({ productos, ambiente, logoSMC: estado.logo, logos, intro: d.intro, final: d.final });
+    $("cEditar").hidden = false;
+    abrirEditorCorreo();
+    logCorreo("Versión restaurada. Puedes corregirla en el editor.");
+  } catch (e) { errorCorreo("No se pudo restaurar la versión: " + e.message); }
 }
 
 function iniciarCorreo() {

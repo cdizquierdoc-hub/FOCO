@@ -64,6 +64,13 @@
   .btn { display:inline-flex; align-items:center; justify-content:center; gap:10px; border:0; border-radius:999px; padding:15px 28px; font:inherit; font-weight:800; font-size:15px; cursor:pointer; background:var(--azul); color:#fff; box-shadow:0 10px 20px rgba(71,169,228,.30); transition:.2s; }
   .btn:hover:not(:disabled) { background:var(--azul2); transform:translateY(-1px); }
   .btn svg { width:18px; height:18px; stroke:currentColor; fill:none; stroke-width:2.4; stroke-linecap:round; stroke-linejoin:round; }
+  .historial { margin-top:22px; border-top:1px solid var(--borde); padding-top:14px; }
+  .historial h4 { margin:0 0 4px; font-size:15px; color:var(--marino); }
+  .hist-grupo { margin-top:12px; }
+  .hist-grupo h3 { margin:0 0 4px; font-size:14px; color:var(--azul2); }
+  .hist-fila { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:6px 0; font-size:14px; color:var(--gris); }
+  .hist-btn { padding:8px 16px; font-size:13px; }
+  .hist-vacio { font-size:14px; color:var(--gris); margin:6px 0 0; }
   .btn.sec { background:#fff; color:var(--marino); box-shadow:none; border:2px solid var(--marino); padding:10px 16px; font-size:13px; }
   .btn.sec:hover:not(:disabled) { background:var(--marino); color:#fff; }
   .btn.peligro { background:var(--err); color:#fff; border-color:var(--err); }
@@ -214,6 +221,7 @@
     </div>
     <div class="barra" id="barra"></div>
     <p id="log" class="estado"></p>
+    <div class="historial" id="histFichas"></div>
     <div id="error" class="alerta"></div>
   </section>
 
@@ -321,6 +329,7 @@
       </div>
       <div class="barra" id="cBarra"></div>
       <p id="cLog" class="estado"></p>
+      <div class="historial" id="histCorreo"></div>
       <div id="cError" class="alerta"></div>
     </section>
   </div>
@@ -332,6 +341,7 @@
 <script src="js/base.js"></script>
 <script src="js/laminas.js"></script>
 <script src="js/editor.js"></script>
+<script src="js/historial.js"></script>
 <script src="js/app.js"></script>
 <script src="js/correo.js"></script>
 </body>

@@ -34,7 +34,7 @@ Lee el spec sheet y responde SOLO con un objeto JSON válido (sin texto extra, s
     "beneficios_3_4": "ambiente SIN producto para las características 3 y 4"
   },
   "subtitulos_beneficios": ["2 frases que resumen las características 1 y 2 juntas y su beneficio para el cliente", "2 frases que resumen las características 3 y 4 juntas y su beneficio para el cliente"],
-  "beneficios": [ { "titulo": "...", "corto": "de 10 a 14 palabras que explican brevemente qué es o qué hace la característica, por ejemplo: Luz de encendido y luz de listo que indican el estado del equipo.", "texto": "de 35 a 45 palabras en 3 o 4 frases con detalle técnico: qué componente o tecnología lo hace posible, cómo funciona y qué gana el cliente" } ],
+  "beneficios": [ { "titulo": "...", "corto": "de 10 a 14 palabras que explican brevemente qué es o qué hace la característica, por ejemplo: Luz de encendido y luz de listo que indican el estado del equipo.", "texto": "de 22 a 30 palabras en 2 o 3 frases muy técnicas: nombra el componente o tecnología concreta (compresor inverter, sensor, ciclo de refrigeración, tipo de placa, material), su medida o nivel si el spec sheet lo trae, y qué logra el cliente" } ],
   "datos_destacados": [ { "valor": "43 dB", "etiqueta": "Nivel de ruido" } ],
   "despacho": [ { "etiqueta": "...", "valor": "...", "icono": "..." } ]
 }
@@ -45,6 +45,7 @@ Reglas:
 - Si el spec sheet no detalla una característica, explica su beneficio general en palabras sencillas, sin inventar cifras ni datos técnicos.
 - "modelo": {REGLA_CODIGO}.
 - El detalle técnico va en "texto": usa datos concretos del spec sheet (medidas, potencia, niveles, capacidad, materiales, tecnología) cuando existan. "corto" es solo una frase para la lámina de las 4 características.
+- En datos_destacados, el espacio del refrigerador va siempre con el del congelador; si no están los dos, usa la capacidad total neta en litros. La eficiencia energética (Clase A) solo va si el spec sheet la indica.
 - Usa el nombre exacto del producto del spec sheet: si es sanduchera o prensa panini, escribe sanduchera, nunca tostadora ni tostador.
 - Prohibido repetir muletillas como "lo que te permite", "esto te permite", "lo que permite" o "permite" en cada texto. Varía la redacción en cada característica.
 - "subtitulos_beneficios" hablan solo de las 2 características de cada lámina, con un tono de venta y sin repetir el título.
