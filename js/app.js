@@ -149,7 +149,7 @@ async function montarFicha(ficha, amb, feats) {
     beneficios: feats.map((f, i) => ({ titulo: f.trim(), texto: (ficha.beneficios && ficha.beneficios[i] && ficha.beneficios[i].texto) || "", corto: (ficha.beneficios && ficha.beneficios[i] && ficha.beneficios[i].corto) || "" })),
     subtitulos: ficha.subtitulos_beneficios || [],
     datos: datosExtra(ficha.datos_destacados, feats),
-    despacho: (ficha.despacho || []).slice(0, 15).map((it) => (/modelo|c[oó]digo/i.test(it.etiqueta || "") ? Object.assign({}, it, { valor: ficha.modelo }) : it)),
+    despacho: limpiarDespacho(ficha.despacho, ficha.modelo),
     ambientes: amb,
     logo: estado.logo
   };
@@ -158,6 +158,19 @@ async function montarFicha(ficha, amb, feats) {
   editor.slides = construirLaminas(D);
   editor.actual = 0; editor.selId = null; editor.historial = [];
   mostrarEditor();
+}
+
+/* Despacho: sin almacenamiento ni palabras en inglés; el peso se muestra solo como "Peso" */
+function limpiarDespacho(lista, modelo) {
+  return (lista || []).map((it) => {
+    if (!it) return null;
+    let etiqueta = String(it.etiqueta || ""), valor = String(it.valor || "");
+    if (/almacen/i.test(etiqueta)) return null;
+    valor = valor.replace(/upright|almacenamiento/gi, "").replace(/\n\s*\n/g, "\n").trim();
+    if (/peso/i.test(etiqueta)) etiqueta = "Peso";
+    if (!valor) return null;
+    return Object.assign({}, it, { etiqueta, valor: /modelo|c[oó]digo/i.test(etiqueta) ? modelo : valor });
+  }).filter(Boolean).slice(0, 15);
 }
 
 async function datosFichaHistorial(ficha, amb, feats) {

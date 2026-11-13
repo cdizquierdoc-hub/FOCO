@@ -16,16 +16,16 @@ const FICHA_DEMO = {
   subtitulos_beneficios: ["Control táctil en el exterior y compresor de velocidad variable: frío estable con menos consumo de energía.", "Dispensador de agua fría y 434 litros de capacidad neta para organizar la compra de toda la semana."],
   portada: { titulo: "REFRIGERACIÓN SMC", texto: "La nueva SMCRF14TMGO combina diseño moderno, gran capacidad y funciones pensadas para hacer tu día a día más práctico." },
   beneficios: [
-    { titulo: "Panel digital exterior", corto: "Control del frío desde el exterior.", texto: "Sensor de temperatura en cada compartimento y pantalla táctil en la puerta. Ajustas el frío sin abrir el refrigerador, así se conserva el aire frío y baja el consumo." },
-    { titulo: "Ahorro de energía", corto: "Menos consumo en el día a día.", texto: "Compresor inverter de velocidad variable: modula su potencia según la carga real, en vez de encenderse y apagarse. Mantiene la temperatura estable con menor consumo eléctrico." },
-    { titulo: "Dispensador de agua", corto: "Agua fría sin abrir la puerta.", texto: "Dispensador frontal con agua fría sin abrir la puerta. Su filtro de fácil reemplazo retiene impurezas para entregar agua limpia de forma continua." },
-    { titulo: "Gran capacidad", corto: "Espacio para toda la compra.", texto: "434 litros de capacidad neta con estantes ajustables y cajones de acceso frontal. Distribuye la compra por zonas de temperatura y aprovecha cada nivel." }
+    { titulo: "Panel digital exterior", corto: "Pantalla táctil en la puerta para ajustar el frío de cada compartimento sin abrirla.", texto: "Sensor de temperatura en cada compartimento y pantalla táctil en la puerta. Ajustas el frío sin abrir el refrigerador, así se conserva el aire frío y baja el consumo." },
+    { titulo: "Ahorro de energía", corto: "Compresor inverter que consume solo la energía que necesita en cada momento.", texto: "Compresor inverter de velocidad variable: modula su potencia según la carga real, en vez de encenderse y apagarse. Mantiene la temperatura estable con menor consumo eléctrico." },
+    { titulo: "Dispensador de agua", corto: "Dispensador frontal de agua fría con filtro de fácil reemplazo.", texto: "Dispensador frontal con agua fría sin abrir la puerta. Su filtro de fácil reemplazo retiene impurezas para entregar agua limpia de forma continua." },
+    { titulo: "Gran capacidad", corto: "434 litros netos para organizar la compra de toda la semana.", texto: "434 litros de capacidad neta con estantes ajustables y cajones de acceso frontal. Distribuye la compra por zonas de temperatura y aprovecha cada nivel." }
   ],
   despacho: [
     { etiqueta: "Marca", valor: "SMC", icono: "tag" },
     { etiqueta: "Modelo", valor: "SMCRF14TMGO", icono: "modelo" },
     { etiqueta: "Código de producto", valor: "22031020012162", icono: "qr" },
-    { etiqueta: "Tipo", valor: "Top Mount", icono: "tipo" },
+    { etiqueta: "Tipo", valor: "Congelador superior", icono: "tipo" },
     { etiqueta: "Tecnología", valor: "Inverter", icono: "tech" },
     { etiqueta: "Eficiencia energética", valor: "Clase A", icono: "energia" },
     { etiqueta: "Capacidad neta", valor: "434 L", icono: "capacidad" },

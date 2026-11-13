@@ -46,6 +46,10 @@ Reglas:
 - "modelo": {REGLA_CODIGO}.
 - El detalle técnico va en "texto": usa datos concretos del spec sheet (medidas, potencia, niveles, capacidad, materiales, tecnología) cuando existan. "corto" es solo una frase para la lámina de las 4 características.
 - En datos_destacados, el espacio del refrigerador va siempre con el del congelador; si no están los dos, usa la capacidad total neta en litros. La eficiencia energética (Clase A) solo va si el spec sheet la indica.
+- Antes de escribir cada característica, explica su función real en este tipo de producto, no solo repitas el nombre. Glosario de referencia: "Luces indicadoras" = luz de encendido (el equipo está conectado y funcionando) y luz de listo (las placas ya alcanzaron la temperatura para empezar a cocinar). "Control de temperatura automático" = termostato que mantiene la temperatura de cocción sin intervención. "Apagado automático" = el equipo se apaga solo al terminar la cocción o tras un tiempo sin uso. "Placas antiadherentes" = superficie que evita que la comida se pegue.
+- Prohibido usar "permite", "permiten", "permitir" o "te permite" en cualquier texto. Explica con verbos concretos.
+- En "despacho" nunca incluyas almacenamiento, ni "upright", ni nada en inglés. Si hay peso, usa la etiqueta "Peso" con el valor del peso; si no hay peso, no incluyas esa fila.
+- Todo en español, sin palabras en inglés.
 - Usa el nombre exacto del producto del spec sheet: si es sanduchera o prensa panini, escribe sanduchera, nunca tostadora ni tostador.
 - Prohibido repetir muletillas como "lo que te permite", "esto te permite", "lo que permite" o "permite" en cada texto. Varía la redacción en cada característica.
 - "subtitulos_beneficios" hablan solo de las 2 características de cada lámina, con un tono de venta y sin repetir el título.

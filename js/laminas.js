@@ -47,6 +47,19 @@ function laminaPortada(D, fi) {
   return { nombre: NOMBRES_LAMINA[0], fondo: BLANCO, elementos: E };
 }
 
+/* Corta un texto en oraciones completas sin pasar del máximo de palabras */
+function capPalabras(texto, max) {
+  const oraciones = String(texto || "").match(/[^.!?]+[.!?]*/g) || [String(texto || "")];
+  let salida = "", n = 0;
+  for (const o of oraciones) {
+    const t = o.trim(); if (!t) continue;
+    const k = t.split(/\s+/).length;
+    if (n + k > max && salida) break;
+    salida += (salida ? " " : "") + t; n += k;
+  }
+  return salida;
+}
+
 /* Los datos de cada lámina: el espacio del refrigerador va con el del congelador, y la eficiencia
    (Clase A) solo aparece en la lámina del motor inverter / ahorro de energía */
 const ENERGIA_RE = /inverter|energ|compresor|motor|consumo|eficien/i;
@@ -86,12 +99,16 @@ function laminaBeneficios(D, idx, fi) {
     E.push(elem("rect", { x: X, y, w: CW, h: CH, radio: 46, relleno: BLANCO, borde: { color: AZUL, ancho: 3 } }));
     E.push(elem("circulo", { x: cx - 62, y: y - 62, w: 124, h: 124, relleno: AZUL }));
     E.push(elem("icono", { x: cx - 44, y: y - 44, w: 88, h: 88, clave: D.iconos[idx * 2 + i], color: BLANCO }));
-    const tit = fit(b.titulo, 800, CW - 60, 100, 40, 26, 1.1);
-    const yT = y + 62 + 22;
-    E.push(txt({ texto: b.titulo, x: X + 30, y: yT, w: CW - 60, tam: tit.tam, peso: 800, color: AZUL, alin: "center", lh: tit.lh }));
+    // Título y texto centrados en el espacio bajo el icono, con la misma separación arriba y abajo
+    const topA = y + 62 + 16, AH = CH - 62 - 32;
+    const tit = fit(b.titulo, 800, CW - 60, 90, 40, 26, 1.1);
     const hT = tit.lineas.length * tit.tam * tit.lh;
-    const cu = fit(b.texto, 400, CW - 60, CH - (62 + 22 + hT + 26), 26, 22, 1.3);
-    E.push(txt({ texto: b.texto, x: X + 30, y: yT + hT + 10, w: CW - 60, tam: cu.tam, peso: 400, color: AZUL, alin: "center", lh: cu.lh }));
+    const tx = capPalabras(b.texto, 30);
+    const cu = fit(tx, 400, CW - 60, AH - hT - 14, 26, 22, 1.3);
+    const hC = cu.lineas.length * cu.tam * cu.lh;
+    const yT = topA + (AH - hT - 14 - hC) / 2;
+    E.push(txt({ texto: b.titulo, x: X + 30, y: yT, w: CW - 60, tam: tit.tam, peso: 800, color: AZUL, alin: "center", lh: tit.lh }));
+    E.push(txt({ texto: tx, x: X + 30, y: yT + hT + 14, w: CW - 60, tam: cu.tam, peso: 400, color: AZUL, alin: "center", lh: cu.lh }));
   });
 
   // Cifras de características adicionales (no son las 4 principales), dos por lámina
@@ -125,12 +142,16 @@ function laminaCuatro(D, fi) {
     E.push(elem("rect", { x, y, w: CW, h: CH, radio: 40, relleno: BLANCO, borde: { color: AZUL, ancho: 3 } }));
     E.push(elem("circulo", { x: cx - 56, y: y - 56, w: 112, h: 112, relleno: AZUL }));
     E.push(elem("icono", { x: cx - 36, y: y - 36, w: 72, h: 72, clave: D.iconos[i], color: BLANCO }));
+    // Título y explicación centrados en la tarjeta
+    const topA = y + 56 + 12, AH = CH - 56 - 24;
     const tt = fit(b.titulo, 800, 280, 90, 34, 20, 1.1);
-    const yT = y + 56 + 26;
-    E.push(txt({ texto: b.titulo, x: x + 30, y: yT, w: 280, tam: tt.tam, peso: 800, color: AZUL, alin: "center", lh: tt.lh }));
     const hT = tt.lineas.length * tt.tam * tt.lh;
-    const cu = fit(b.corto || b.texto, 400, 280, CH - (56 + 26 + hT + 40), 26, 18, 1.3);
-    E.push(txt({ texto: b.corto || b.texto, x: x + 30, y: yT + hT + 12, w: 280, tam: cu.tam, peso: 400, color: AZUL, alin: "center", lh: cu.lh }));
+    const tx = b.corto || b.texto;
+    const cu = fit(tx, 400, 280, AH - hT - 12, 26, 18, 1.3);
+    const hC = cu.lineas.length * cu.tam * cu.lh;
+    const yT = topA + (AH - hT - 12 - hC) / 2;
+    E.push(txt({ texto: b.titulo, x: x + 30, y: yT, w: 280, tam: tt.tam, peso: 800, color: AZUL, alin: "center", lh: tt.lh }));
+    E.push(txt({ texto: tx, x: x + 30, y: yT + hT + 12, w: 280, tam: cu.tam, peso: 400, color: AZUL, alin: "center", lh: cu.lh }));
   });
   return { nombre: NOMBRES_LAMINA[3], fondo: BLANCO, elementos: E };
 }
@@ -172,7 +193,7 @@ function laminaDespacho(D, fi) {
     E.push(txt({ texto: item.valor, x: x + ic + 20, y: yT + altoE + 6, w: anchoT, tam: va.tam, peso: 400, color: AZUL, lh: va.lh }));
   });
 
-  E.push(productoEl(fi, 760, 1760, 1000));
+  E.push(productoEl(fi, 760, 1630, 1000));
 
   // Píldoras de garantía, más pequeñas para no tapar el producto. La de 10 años solo si es inverter
   const pastillas = [{ y: 420, n: "1 AÑO", t: ["de garantía en todo el producto", "Repuestos + mano de obra."] }];
