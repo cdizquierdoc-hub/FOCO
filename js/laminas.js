@@ -182,10 +182,12 @@ function laminaDespacho(D, fi) {
   const nFilas = Math.ceil(items.length / nCols);
   const separacion = 1020 / nCols;
   const columnasX = Array.from({ length: nCols }, (_, c) => 60 + c * separacion);
-  const yIni = 215, yFin = 985, altoFila = (yFin - yIni) / nFilas;
+  const yIni = 225, yFin = 990, altoFila = (yFin - yIni) / nFilas;
   const ic = 62, anchoT = Math.round(separacion - ic - 40);
+  // Etiqueta con "/" separado por espacios: puede partirse en dos líneas sin invadir la columna de al lado
+  const etiquetaDe = (t) => String(t || "").replace(/\//g, " / ").replace(/\s+/g, " ").trim();
   const medirItem = (it, s) => {
-    const et = fit(it.etiqueta, 800, anchoT, 9999, 28 * s, 28 * s, 1.12);
+    const et = fit(etiquetaDe(it.etiqueta), 800, anchoT, 9999, 28 * s, 28 * s, 1.12);
     const va = fit(it.valor, 400, anchoT, 9999, 24 * s, 24 * s, 1.2);
     const altoE = et.lineas.length * 28 * s * 1.12, altoV = va.lineas.length * 24 * s * 1.2;
     return { et, va, altoE, altoV, h: Math.max(ic, altoE + 6 + altoV) };
@@ -194,7 +196,7 @@ function laminaDespacho(D, fi) {
   const anchoPalabra = (s) => {
     let mayor = 0;
     items.forEach((it) => {
-      [[it.etiqueta, 800, 28 * s], [it.valor, 400, 24 * s]].forEach(([t, peso, tam]) => {
+      [[etiquetaDe(it.etiqueta), 800, 28 * s], [it.valor, 400, 24 * s]].forEach(([t, peso, tam]) => {
         fuente(MEDIR, peso, tam);
         String(t || "").split(/\s+/).forEach((w) => { mayor = Math.max(mayor, MEDIR.measureText(w).width); });
       });
@@ -203,14 +205,14 @@ function laminaDespacho(D, fi) {
   };
   // La letra crece lo necesario para llenar la celda, sin pasar del alto de fila ni del ancho de columna
   let escalaD = 3;
-  while (escalaD > 1 && (items.some((it) => medirItem(it, escalaD).h > altoFila - 24) || anchoPalabra(escalaD) > anchoT)) escalaD -= 0.05;
+  while (escalaD > 1 && (items.some((it) => medirItem(it, escalaD).h > altoFila - 56) || anchoPalabra(escalaD) > anchoT)) escalaD -= 0.05;
   const tamE = 28 * escalaD, tamV = 24 * escalaD;
   items.forEach((item, i) => {
     const x = columnasX[i % nCols], fila = Math.floor(i / nCols);
     const m = medirItem(item, escalaD);
-    const y = yIni + fila * altoFila + (altoFila - m.h) / 2;
+    const y = yIni + fila * altoFila;
     E.push(elem("icono", { x, y: y + tamE * 0.5 - ic / 2, w: ic, h: ic, clave: ICONO_DESPACHO[item.icono] || claveIcono(item.etiqueta), color: AZUL }));
-    E.push(txt({ texto: item.etiqueta, x: x + ic + 20, y, w: anchoT, tam: tamE, peso: 800, color: AZUL, lh: 1.12 }));
+    E.push(txt({ texto: etiquetaDe(item.etiqueta), x: x + ic + 20, y, w: anchoT, tam: tamE, peso: 800, color: AZUL, lh: 1.12 }));
     E.push(txt({ texto: item.valor, x: x + ic + 20, y: y + m.altoE + 6, w: anchoT, tam: tamV, peso: 400, color: AZUL, lh: 1.2 }));
   });
   E.push(productoEl(fi, 860, 1560, 1030));
