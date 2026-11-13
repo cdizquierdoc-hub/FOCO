@@ -10,9 +10,9 @@ const COCINAS = [
   "cocina equipada con isla de madera oscura, luz LED cálida y repisas con utensilios de cocina"
 ];
 const LAVANDERIAS = [
-  "cuarto de lavandería de una casa, con lavadora y secadora, cesto de ropa, estantes con productos de limpieza, piso de cerámica y luz natural cálida",
-  "cuarto de lavandería de una casa, con lavadora de carga frontal, tabla de planchar, ropa doblada en repisas de madera y luz cálida",
-  "cuarto de lavandería de una casa con lavadora, secadora, plantas, cesto de ropa y ventana con luz natural"
+  "cuarto de lavandería de una casa minimalista, pared lisa de un solo color azul medio, una lavadora blanca de carga frontal, piso liso claro, luz suave, sin objetos ni decoración",
+  "cuarto de lavandería de una casa minimalista, pared lisa de un solo color azul medio, una lavadora blanca de carga frontal, piso liso claro, luz suave, sin objetos ni decoración",
+  "cuarto de lavandería de una casa minimalista, pared lisa de un solo color azul medio, una lavadora blanca de carga frontal, piso liso claro, luz suave, sin objetos ni decoración"
 ];
 function ambienteSeguro(ficha, descripcion, indice) {
   const cat = ((ficha.categoria || "") + " " + (ficha.modelo || "")).toLowerCase();
@@ -103,7 +103,8 @@ function laminaBeneficios(D, idx, fi) {
     const topA = y + 62 + 16, AH = CH - 62 - 32;
     const tit = fit(b.titulo, 800, CW - 60, 90, 40, 26, 1.1);
     const hT = tit.lineas.length * tit.tam * tit.lh;
-    const tx = capPalabras(b.texto, 26);
+    // Con viñetas (un modo por línea) no se recorta: cada línea es un modo
+    const tx = String(b.texto || "").includes("\n") ? b.texto : capPalabras(b.texto, 26);
     const cu = fit(tx, 400, CW - 60, AH - hT - 14, 26, 22, 1.3);
     const hC = cu.lineas.length * cu.tam * cu.lh;
     const yT = topA + (AH - hT - 14 - hC) / 2;

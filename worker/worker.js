@@ -35,6 +35,7 @@ Lee el spec sheet y responde SOLO con un objeto JSON válido (sin texto extra, s
   },
   "subtitulos_beneficios": ["2 frases que resumen las características 1 y 2 juntas y su beneficio para el cliente", "2 frases que resumen las características 3 y 4 juntas y su beneficio para el cliente"],
   "beneficios": [ { "titulo": "...", "corto": "de 10 a 14 palabras que explican brevemente qué es o qué hace la característica, por ejemplo: Luz de encendido y luz de listo que indican el estado del equipo.", "texto": "de 20 a 26 palabras en 2 o 3 frases muy técnicas: nombra el componente o tecnología concreta (compresor inverter, sensor, ciclo de refrigeración, tipo de placa, material), su medida o nivel si el spec sheet lo trae, y qué logra el cliente" } ],
+- Si una característica tiene varios modos o funciones (por ejemplo seco, vapor, rociado, vapor ráfaga), el "texto" va en viñetas, una línea por modo con el formato "• Nombre: para qué sirve, en pocas palabras". Explica siempre para qué sirve cada modo, sin frases largas, y sin el "20 a 26 palabras" en ese caso.
   "datos_destacados": [ { "valor": "43 dB", "etiqueta": "Nivel de ruido" } ],
   "despacho": [ { "etiqueta": "...", "valor": "...", "icono": "..." } ]
 }
@@ -211,7 +212,7 @@ async function imagenWorkersAI(ambiente, env, cors) {
   if (!env.AI) return json({ error: "Falta el binding AI (Workers AI) en el Worker" }, 500, cors);
   const esLavanderia = /lavand|lavad|secad|plancha|ropa/i.test(ambiente);
   const prompt = esLavanderia
-    ? "Fotografía profesional de un cuarto de lavandería de una casa residencial, con lavadora y secadora de carga frontal, cesto de ropa, estantes con productos de limpieza y una tabla de planchar plegada, piso de cerámica, luz natural cálida, espacio despejado a la derecha para colocar un producto, sin personas, sin texto, enfoque nítido y realista. " + ambiente
+    ? "Fotografía minimalista de un cuarto de lavandería de una casa, pared lisa de un solo color azul medio, una lavadora blanca de carga frontal a la izquierda, piso liso claro, luz suave, sin objetos ni decoración, espacio despejado a la derecha para colocar un producto, sin personas, sin texto, enfoque nítido y realista. " + ambiente
     : "Fotografía profesional de la pared frontal del interior descrito, luminoso, espacio libre y piso despejado frente a la pared, sin isla, sin mesa, sin barra, " +
     "horizontal, de borde a borde, " +
     "iluminación cálida y elegante, enfoque nítido y realista. " +

@@ -51,10 +51,17 @@ async function llamarWorker(ruta, cuerpo) {
 /* Ambiente con IA; si falla, se usa un fondo de respaldo y se avisa */
 async function obtenerAmbiente(tipo, descripcion) {
   if (!URL_BASE()) return escenaRespaldo(tipo);
-  try {
-    const { imagen_base64, media_type } = await llamarWorker("/api/imagen", { ambiente: descripcion });
-    return await cargarImagen(`data:${media_type};base64,${imagen_base64}`);
-  } catch (e) {
+  // Un reintento antes de usar el respaldo, por si la generación falló por un momento
+  let ultimo = null;
+  for (let intento = 0; intento < 2; intento++) {
+    try {
+      if (intento) await new Promise((r) => setTimeout(r, 1500));
+      const { imagen_base64, media_type } = await llamarWorker("/api/imagen", { ambiente: descripcion });
+      return await cargarImagen(`data:${media_type};base64,${imagen_base64}`);
+    } catch (e) { ultimo = e; }
+  }
+  {
+    const e = ultimo;
     error((($("error").textContent) ? $("error").textContent + "\n" : "") + `No se pudo generar el ambiente "${tipo}" con IA (se usó un fondo de respaldo). Motivo: ${e.message}`);
     return escenaRespaldo(tipo);
   }
@@ -122,12 +129,11 @@ async function generar() {
     ficha = marcaEnFicha(ficha);
     const esc = ficha.escenas || FICHA_DEMO.escenas;
     log("Generando los ambientes...");
-    const [portada, b1, b2, c4] = await Promise.all([
-      obtenerAmbiente("portada", ambienteSeguro(ficha, esc.portada, 0)),
-      obtenerAmbiente("b1", ambienteSeguro(ficha, esc.beneficios_1_2, 1)),
-      obtenerAmbiente("b2", ambienteSeguro(ficha, esc.beneficios_3_4, 2)),
-      obtenerAmbiente("c4", ambienteSeguro(ficha, esc.portada, 3))
-    ]);
+    // De una en una: generar varias imágenes a la vez puede hacer que alguna falle
+    const portada = await obtenerAmbiente("portada", ambienteSeguro(ficha, esc.portada, 0));
+    const b1 = await obtenerAmbiente("b1", ambienteSeguro(ficha, esc.beneficios_1_2, 1));
+    const b2 = await obtenerAmbiente("b2", ambienteSeguro(ficha, esc.beneficios_3_4, 2));
+    const c4 = await obtenerAmbiente("c4", ambienteSeguro(ficha, esc.portada, 3));
     log("Armando las 7 láminas...");
     const amb = { portada, b1, b2, c4 };
     const feats = estado.feats.slice();
