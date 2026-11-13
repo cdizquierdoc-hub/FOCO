@@ -119,11 +119,11 @@ function laminaBeneficios(D, idx, fi) {
     const bx = 1760, by = i === 0 ? 250 : 800;
     E.push(elem("circulo", { x: bx - 125, y: by - 125, w: 250, h: 250, relleno: AZUL, sombra: true }));
     E.push(elem("circulo", { x: bx - 103, y: by - 103, w: 206, h: 206, relleno: BLANCO }));
-    const tv = ajustarLinea(MEDIR, dato.valor, 800, 150, 56, 30);
+    const tv = fit(dato.valor, 800, 150, 90, 56, 26, 1.05);
     const te = fit(dato.etiqueta || "", 400, 150, 60, 22, 16, 1.1);
-    const altoV = tv * 1.1, altoE = te.lineas.length * te.tam * te.lh;
+    const altoV = tv.lineas.length * tv.tam * tv.lh, altoE = te.lineas.length * te.tam * te.lh;
     const yV = by - (altoV + 8 + altoE) / 2;
-    E.push(txt({ texto: dato.valor, x: bx - 75, y: yV, w: 150, tam: tv, peso: 800, color: AZUL, alin: "center", lh: 1.1 }));
+    E.push(txt({ texto: dato.valor, x: bx - 75, y: yV, w: 150, tam: tv.tam, peso: 800, color: AZUL, alin: "center", lh: tv.lh }));
     E.push(txt({ texto: dato.etiqueta || "", x: bx - 75, y: yV + altoV + 8, w: 150, tam: te.tam, peso: 400, color: AZUL, alin: "center", lh: te.lh }));
   });
   return { nombre: NOMBRES_LAMINA[idx + 1], fondo: BLANCO, elementos: E };
@@ -184,20 +184,27 @@ function laminaDespacho(D, fi) {
   // Mismo tamaño de letra para todas las filas: el menor que quepa en todas
   const tamE = Math.min(28, ...items.map((it) => fit(it.etiqueta, 800, anchoT, alto * 0.5, 28, 18, 1.12).tam));
   const tamV = Math.min(24, ...items.map((it) => fit(it.valor, 400, anchoT, alto * 0.5, 24, 16, 1.2).tam));
-  // Cada columna se apila según la altura real de sus datos, con la misma separación
-  const cursores = [yIni, yIni, yIni];
-  items.forEach((item, i) => {
-    const col = Math.floor(i / porCol), x = columnasX[col], yFila = cursores[col];
+  // Se mide cada dato y cada columna se reparte de arriba abajo, ocupando todo el alto disponible
+  const medidos = items.map((item, i) => {
     const et = fit(item.etiqueta, 800, anchoT, 9999, tamE, tamE, 1.12);
     const va = fit(item.valor, 400, anchoT, 9999, tamV, tamV, 1.2);
-    const altoE = et.lineas.length * tamE * 1.12;
-    cursores[col] = yFila + Math.max(ic, altoE + 6 + va.lineas.length * tamV * 1.2) + 30;
-    // Todo arriba alineado: icono junto a la primera línea de la etiqueta
-    E.push(elem("icono", { x, y: yFila + tamE * 0.5 - ic / 2, w: ic, h: ic, clave: ICONO_DESPACHO[item.icono] || claveIcono(item.etiqueta), color: AZUL }));
-    E.push(txt({ texto: item.etiqueta, x: x + ic + 20, y: yFila, w: anchoT, tam: tamE, peso: 800, color: AZUL, lh: 1.12 }));
-    E.push(txt({ texto: item.valor, x: x + ic + 20, y: yFila + altoE + 6, w: anchoT, tam: tamV, peso: 400, color: AZUL, lh: 1.2 }));
+    const altoE = et.lineas.length * tamE * 1.12, altoV = va.lineas.length * tamV * 1.2;
+    return { item, et, va, altoE, col: Math.floor(i / porCol), h: Math.max(ic, altoE + 6 + altoV) };
   });
-
+  for (let col = 0; col < 3; col++) {
+    const grupo = medidos.filter((g) => g.col === col);
+    if (!grupo.length) continue;
+    const sumH = grupo.reduce((a, g) => a + g.h, 0);
+    const gap = grupo.length > 1 ? Math.max(24, Math.min(110, (yFin - yIni - sumH) / (grupo.length - 1))) : 0;
+    const x = columnasX[col];
+    let y = yIni;
+    grupo.forEach((g) => {
+      E.push(elem("icono", { x, y: y + tamE * 0.5 - ic / 2, w: ic, h: ic, clave: ICONO_DESPACHO[g.item.icono] || claveIcono(g.item.etiqueta), color: AZUL }));
+      E.push(txt({ texto: g.item.etiqueta, x: x + ic + 20, y, w: anchoT, tam: tamE, peso: 800, color: AZUL, lh: 1.12 }));
+      E.push(txt({ texto: g.item.valor, x: x + ic + 20, y: y + g.altoE + 6, w: anchoT, tam: tamV, peso: 400, color: AZUL, lh: 1.2 }));
+      y += g.h + gap;
+    });
+  }
   E.push(productoEl(fi, 760, 1630, 1000));
 
   // Píldoras de garantía, más pequeñas para no tapar el producto. La de 10 años solo si es inverter
