@@ -178,7 +178,7 @@ function laminaDespacho(D, fi) {
   // Especificaciones en 3 columnas, con el mismo tamaño de letra y centradas verticalmente
   const items = D.despacho.slice(0, 15);
   // Cuadrícula ordenada: filas y columnas alineadas, se lee de izquierda a derecha y de arriba abajo
-  const nCols = items.length <= 2 ? 1 : items.length <= 4 ? 2 : 3;
+  const nCols = items.length <= 2 ? 1 : items.length <= 6 ? 2 : 3;
   const nFilas = Math.ceil(items.length / nCols);
   const separacion = 1020 / nCols;
   const columnasX = Array.from({ length: nCols }, (_, c) => 60 + c * separacion);
@@ -202,7 +202,7 @@ function laminaDespacho(D, fi) {
     return mayor;
   };
   // La letra crece lo necesario para llenar la celda, sin pasar del alto de fila ni del ancho de columna
-  let escalaD = 2;
+  let escalaD = 3;
   while (escalaD > 1 && (items.some((it) => medirItem(it, escalaD).h > altoFila - 24) || anchoPalabra(escalaD) > anchoT)) escalaD -= 0.05;
   const tamE = 28 * escalaD, tamV = 24 * escalaD;
   items.forEach((item, i) => {
