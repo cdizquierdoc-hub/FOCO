@@ -26,8 +26,8 @@ Lee el spec sheet y responde SOLO con un objeto JSON válido (sin texto extra, s
   "tipo": "nombre corto del producto en minúscula, por ejemplo sanduchera 2 panes",
   "inverter": true o false (true solo si el spec sheet indica tecnología inverter),
   "subtitulo_ficha": "frase corta en español sobre el producto",
-  "categoria": "tipo de producto: refrigeradora, lavadora, cocina, aire acondicionado, etc.",
-  "portada": { "titulo": "REFRIGERACIÓN {MARCA}", "texto": "1 o 2 frases comerciales para la portada" },
+  "categoria": "tipo específico del producto, por ejemplo sanduchera, refrigeradora, lavadora, aire acondicionado. Nunca escribas 'cocina' como categoría.",
+  "portada": { "titulo": "TIPO DEL PRODUCTO EN MAYÚSCULAS seguido de {MARCA}, por ejemplo SANDUCHERA {MARCA}", "texto": "1 o 2 frases comerciales para la portada" },
   "escenas": {
     "portada": "ambiente SIN producto donde se usa este tipo de producto, en una frase (ej. cocina moderna de noche con isla de mármol)",
     "beneficios_1_2": "ambiente SIN producto para las características 1 y 2",
@@ -49,6 +49,8 @@ Reglas:
 - Antes de escribir cada característica, explica su función real en este tipo de producto, no solo repitas el nombre. Glosario de referencia: "Luces indicadoras" = luz de encendido (el equipo está conectado y funcionando) y luz de listo (las placas ya alcanzaron la temperatura para empezar a cocinar). "Control de temperatura automático" = termostato que mantiene la temperatura de cocción sin intervención. "Apagado automático" = el equipo se apaga solo al terminar la cocción o tras un tiempo sin uso. "Placas antiadherentes" = superficie que evita que la comida se pegue.
 - Prohibido usar "permite", "permiten", "permitir" o "te permite" en cualquier texto. Explica con verbos concretos.
 - En "despacho" nunca incluyas almacenamiento, ni "upright", ni nada en inglés. Si hay peso, usa la etiqueta "Peso" con el valor del peso; si no hay peso, no incluyas esa fila.
+- Prohibido en cualquier texto: grill, ribbed, non-stick, premium y toda palabra en inglés que no sea nombre comercial. Usa en su lugar "placas acanaladas" o "antiadherentes".
+- Las 3 escenas deben ser distintas entre sí. Para pequeños electrodomésticos (sanduchera, licuadora, cafetera) usa mesa de desayuno, barra o encimera con otra luz y otro ángulo; nunca la misma cocina repetida.
 - Todo en español, excepto los nombres comerciales de tipo de producto que se usan así en el mercado (Top Mount, Side by Side, Inverter). No uses palabras en inglés poco comunes en español (por ejemplo, upright): tradúcelas o, si son de almacenamiento, omítelas.
 - Usa el nombre exacto del producto del spec sheet: si es sanduchera o prensa panini, escribe sanduchera, nunca tostadora ni tostador.
 - Prohibido repetir muletillas como "lo que te permite", "esto te permite", "lo que permite" o "permite" en cada texto. Varía la redacción en cada característica.

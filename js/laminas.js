@@ -14,11 +14,13 @@ const LAVANDERIAS = [
   "interior de lavandería moderna con repisas de madera y luz natural cálida",
   "interior de lavandería moderna con encimera blanca y plantas"
 ];
+/* Cada lámina con su propio encuadre y luz, para que los fondos no se repitan */
+const VARIANTES_AMBIENTE = [", vista frontal con luz natural de día", ", vista lateral con mesa o barra y luz cálida", ", vista desde arriba sobre una encimera limpia", ", vista de cerca con luz suave de noche"];
 function ambienteSeguro(ficha, descripcion, indice) {
   const cat = ((ficha.categoria || "") + " " + (ficha.modelo || "")).toLowerCase();
   if (/refri|congela|nevera|frigor|rf\d/.test(cat)) return COCINAS[indice] + ", vista frontal de la pared de la cocina, espacio libre y piso despejado frente al producto, sin isla ni mesa, iluminación luminosa";
   if (/lavad|secad/.test(cat)) return LAVANDERIAS[indice];
-  return descripcion;
+  return descripcion + (VARIANTES_AMBIENTE[indice] || "");
 }
 
 /* Encabezado: tipo del producto en mayúsculas + código SMC */
