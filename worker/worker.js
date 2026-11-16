@@ -27,7 +27,7 @@ Lee el spec sheet y responde SOLO con un objeto JSON válido (sin texto extra, s
   "inverter": true o false (true solo si el spec sheet indica tecnología inverter),
   "subtitulo_ficha": "frase corta en español sobre el producto",
   "categoria": "tipo específico del producto, por ejemplo sanduchera, refrigeradora, lavadora, aire acondicionado. Nunca escribas 'cocina' como categoría.",
-  "portada": { "titulo": "TIPO DEL PRODUCTO EN MAYÚSCULAS seguido de {MARCA}, por ejemplo SANDUCHERA {MARCA}", "texto": "1 o 2 frases comerciales para la portada" },
+  "portada": { "titulo": "TIPO DEL PRODUCTO EN MAYÚSCULAS, SIEMPRE EN SINGULAR (PLANCHA, nunca PLANCHAS; SANDUCHERA, nunca SANDUCHERAS), seguido de {MARCA}, por ejemplo SANDUCHERA {MARCA}", "texto": "1 o 2 frases comerciales para la portada" },
   "escenas": {
     "portada": "ambiente SIN producto donde se usa este tipo de producto, en una frase (ej. cocina moderna de noche con isla de mármol)",
     "beneficios_1_2": "ambiente SIN producto para las características 1 y 2",

@@ -41,8 +41,8 @@ function laminaPortada(D, fi) {
   E.push(elem("rect", { x: -100, y: 70, w: 530, h: 200, radio: 100, relleno: AZUL }));
   const lw = 290, lh = lw * D.logo.height / D.logo.width;
   E.push(imagenEl(D.logo, { x: 50, y: 70 + (200 - lh) / 2, w: lw, h: lh }));
-  E.push(txt({ texto: D.modelo, x: 110, y: yTit2 - 1.02 * tamT - 0.95 * tamT, w: 1150, tam: tamT, lh: 1, sombra: true }));
-  E.push(txt({ texto: D.portada.titulo, x: 110, y: yTit2 - 0.95 * tamT, w: 1150, tam: tamT, lh: 1, sombra: true }));
+  E.push(txt({ texto: D.portada.titulo, x: 110, y: yTit2 - 1.02 * tamT - 0.95 * tamT, w: 1150, tam: tamT, lh: 1, sombra: true }));
+  E.push(txt({ texto: D.modelo, x: 110, y: yTit2 - 0.95 * tamT, w: 1150, tam: tamT, lh: 1, sombra: true }));
   E.push(txt({ texto: D.portada.texto, x: 110, y: yDesc, w: 1150, tam: desc.tam, lh: 1.3, sombra: true, peso: 400 }));
   return { nombre: NOMBRES_LAMINA[0], fondo: BLANCO, elementos: E };
 }
@@ -219,7 +219,7 @@ function laminaDespacho(D, fi) {
   E.push(productoEl(fi, 860, 1560, 1030));
 
   // Píldoras de garantía, más pequeñas para no tapar el producto. La de 10 años solo si es inverter
-  const pastillas = [{ y: 420, n: "1 AÑO", t: ["de garantía en todo el producto", "Repuestos + mano de obra."] }];
+  const pastillas = [{ y: 420, n: "1 AÑO", t: ["de garantía en todo el producto"] }];
   if (D.inverter) pastillas.push({ y: 680, n: "10 AÑOS", t: ["de garantía total", "en el compresor."] });
   pastillas.forEach((p) => {
     const px = 1130, pw = 480, ph = 124;
@@ -230,7 +230,7 @@ function laminaDespacho(D, fi) {
     const anchoN = MEDIR.measureText(p.n).width;
     E.push(txt({ texto: p.n, x: px + 26, y: p.y + ph / 2 - tamN * 0.6, w: anchoN + 20, tam: tamN, peso: 800, color: BLANCO, lh: 1.1 }));
     const xT = px + 26 + anchoN + 20, maxT = px + pw - 26 - xT;
-    const det = fit(p.t.join("\n"), 400, maxT, ph - 20, 22, 16, 1.15);
+    const det = fit(p.t.join("\n"), 400, maxT, ph - 20, 34, 24, 1.15);
     const altoT = det.lineas.length * det.tam * det.lh;
     E.push(txt({ texto: p.t.join("\n"), x: xT, y: p.y + (ph - altoT) / 2, w: maxT, tam: det.tam, peso: 400, color: BLANCO, lh: det.lh }));
   });
