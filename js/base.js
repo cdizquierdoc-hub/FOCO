@@ -261,6 +261,11 @@ function recortarProducto(img) {
     const i = p * 4;
     return Math.abs(d[i] - r0) + Math.abs(d[i + 1] - g0) + Math.abs(d[i + 2] - b0) < 90;
   };
+  // Solo quita el fondo si el borde de la foto es casi todo de un mismo color; si no, la foto se usa tal cual
+  let bordeFondo = 0, bordeTotal = 0;
+  for (let x = 0; x < w; x += 4) { bordeTotal += 2; if (esFondo(x)) bordeFondo++; if (esFondo((h - 1) * w + x)) bordeFondo++; }
+  for (let y = 0; y < h; y += 4) { bordeTotal += 2; if (esFondo(y * w)) bordeFondo++; if (esFondo(y * w + w - 1)) bordeFondo++; }
+  if (bordeFondo < bordeTotal * 0.9) return c;
   const visto = new Uint8Array(w * h);
   const pila = [];
   for (let x = 0; x < w; x++) { pila.push(x, (h - 1) * w + x); }
