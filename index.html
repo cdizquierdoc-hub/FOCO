@@ -95,7 +95,7 @@
   .mini-item { border:2px solid var(--borde); border-radius:12px; padding:5px; background:#fff; cursor:pointer; font:inherit; font-size:11px; font-weight:700; color:var(--gris); text-align:left; }
   .mini-item.act { border-color:var(--azul); box-shadow:0 0 0 3px rgba(71,169,228,.2); color:var(--marino); }
   .mini-item canvas { width:100%; display:block; border-radius:7px; margin-bottom:4px; }
-  .lienzo-wrap { background:#e9eff6; border-radius:18px; padding:14px; }
+  .lienzo-wrap { background:#e9eff6; border-radius:18px; padding:14px; position:relative; }
   #lienzo { width:100%; height:auto; display:block; border-radius:10px; background:#fff; touch-action:none; box-shadow:0 6px 18px rgba(23,38,79,.12); }
   .props { background:#fff; border:1px solid var(--borde); border-radius:18px; padding:16px; display:grid; gap:12px; align-content:start; }
   .props h3 { margin:0; font-size:14px; color:var(--marino); }
@@ -229,7 +229,7 @@
     <div class="barra-editor">
       <div>
         <h2 style="margin:0;font-size:18px;color:var(--marino)">Editor de la ficha (7 láminas)</h2>
-        <small style="color:var(--gris)">Haz clic en un elemento para editarlo. Arrástralo para moverlo; la esquina inferior derecha cambia su tamaño.</small>
+        <small style="color:var(--gris)">Haz clic en un elemento para seleccionarlo y arrástralo para moverlo. Las esquinas cambian su tamaño, la manija superior lo rota y el doble clic en un texto permite editarlo.</small>
       </div>
       <div class="acciones">
         <button id="bVolver" class="btn sec">← Volver</button>

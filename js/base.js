@@ -312,8 +312,8 @@ function txt(o) {
 function imagenEl(img, o) {
   return elem("imagen", Object.assign({ img, x: 0, y: 0, w: W, h: H, tinte: false, fondo: false }, o));
 }
-function anchoPorAlto(i, h) {
-  const p = estado.productos[i] || estado.productos[0];
+function anchoPorAlto(i, h, fotos) {
+  const p = (fotos && fotos[i]) || estado.productos[i] || estado.productos[0];
   return h * p.width / p.height;
 }
 function productoEl(i, h, cx, base) {
@@ -401,11 +401,15 @@ function pintarSlide(ctx, s) {
   ctx.fillStyle = s.fondo || BLANCO;
   ctx.fillRect(0, 0, d.w, d.h);
   for (const e of s.elementos) {
+    if (e.ocultoEditor) continue; // texto que se está editando en una caja aparte
+    ctx.save();
+    if (e.rot) { const cx = e.x + e.w / 2, cy = e.y + e.h / 2; ctx.translate(cx, cy); ctx.rotate(e.rot * Math.PI / 180); ctx.translate(-cx, -cy); }
     if (e.tipo === "imagen") dibujarImagen(ctx, e);
     else if (e.tipo === "texto") dibujarTexto(ctx, e);
     else if (e.tipo === "rect" || e.tipo === "circulo" || e.tipo === "poli") dibujarForma(ctx, e);
     else if (e.tipo === "producto") dibujarProducto(ctx, e, s.fotos || estado.productos);
     else if (e.tipo === "icono") ctx.drawImage(icono(e.clave, e.color), e.x, e.y, e.w, e.h);
+    ctx.restore();
   }
 }
 function lienzoDeSlide(s) {

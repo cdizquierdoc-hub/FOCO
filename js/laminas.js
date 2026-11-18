@@ -17,7 +17,7 @@ const LAVANDERIAS = [
 function ambienteSeguro(ficha, descripcion, indice) {
   const cat = ((ficha.categoria || "") + " " + (ficha.modelo || "")).toLowerCase();
   if (/refri|congela|nevera|frigor|rf\d/.test(cat)) return COCINAS[indice] + ", vista frontal de la pared de la cocina, espacio libre y piso despejado frente al producto, sin isla ni mesa, iluminación luminosa";
-  if (/lavad|secad|plancha|ropa/.test(cat)) return LAVANDERIAS[indice % LAVANDERIAS.length];
+  if (/lavad|secad|plancha|ropa|aire|ventilad|climat|clima/.test(cat)) return LAVANDERIAS[indice % LAVANDERIAS.length];
   return descripcion;
 }
 
