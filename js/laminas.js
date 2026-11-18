@@ -14,10 +14,17 @@ const LAVANDERIAS = [
   "cuarto de lavado minimalista de una casa, pared lisa azul medio, paleta de azul, blanco y madera clara, una canasta de mimbre clara llena de prendas blancas y azul claro en el piso, piso claro, luz suave, sin electrodomésticos, no es sala, no está vacío",
   "cuarto de lavado minimalista de una casa, pared lisa azul medio, paleta de azul, blanco y madera clara, una barra en la pared con dos perchas con prendas blancas y azul claro, piso claro, luz suave, sin electrodomésticos, no es sala, no está vacío"
 ];
+/* Climatización (aires, ventiladores): solo un cuarto minimalista con una pared lisa, sin objetos */
+const CLIMATIZACION = [
+  "ambiente de climatización: cuarto minimalista de una casa, pared lisa de un solo color azul medio que ocupa casi toda la imagen, piso liso claro, luz suave, sin objetos ni muebles",
+  "ambiente de climatización: cuarto minimalista de una casa, pared lisa azul medio con luz suave lateral, piso claro liso, sin objetos ni muebles",
+  "ambiente de climatización: cuarto minimalista, pared azul medio lisa y sobria, piso claro, sin objetos"
+];
 function ambienteSeguro(ficha, descripcion, indice) {
   const cat = ((ficha.categoria || "") + " " + (ficha.modelo || "")).toLowerCase();
   if (/refri|congela|nevera|frigor|rf\d/.test(cat)) return COCINAS[indice] + ", vista frontal de la pared de la cocina, espacio libre y piso despejado frente al producto, sin isla ni mesa, iluminación luminosa";
-  if (/lavad|secad|plancha|ropa|aire|ventilad|climat|clima/.test(cat)) return LAVANDERIAS[indice % LAVANDERIAS.length];
+  if (/aire|ventilad|climat|clima/.test(cat)) return CLIMATIZACION[indice % CLIMATIZACION.length];
+  if (/lavad|secad|plancha|ropa/.test(cat)) return LAVANDERIAS[indice % LAVANDERIAS.length];
   return descripcion;
 }
 
