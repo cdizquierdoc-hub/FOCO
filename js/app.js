@@ -244,7 +244,22 @@ function fijarProductos(lista, referencia) {
   estado.miniaturas = lista.map((c) => c.toDataURL("image/png"));
   const cont = $("miniFotos");
   cont.innerHTML = "";
-  estado.miniaturas.forEach((src) => { const im = document.createElement("img"); im.src = src; cont.appendChild(im); });
+  const conOpciones = fotosSubidas.length === lista.length;
+  estado.miniaturas.forEach((src, i) => {
+    const celda = document.createElement("div");
+    celda.className = "foto-op";
+    const im = document.createElement("img"); im.src = src; celda.appendChild(im);
+    if (conOpciones) {
+      const n = document.createElement("span"); n.textContent = `Foto ${i + 1}`; celda.appendChild(n);
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "btn-fondo" + (fotosSubidas[i].quitar ? " on" : "");
+      b.textContent = fotosSubidas[i].quitar ? "Sin fondo ✓" : "Quitar fondo";
+      b.addEventListener("click", (ev) => { ev.preventDefault(); ev.stopPropagation(); fotosSubidas[i].quitar = !fotosSubidas[i].quitar; reconstruirFotos(); });
+      celda.appendChild(b);
+    }
+    cont.appendChild(celda);
+  });
   if (referencia) { estado.fotoBase64 = referencia; estado.fotoMedia = "image/jpeg"; }
   validar();
 }
@@ -255,19 +270,10 @@ function reconstruirFotos() {
   const lista = fotosSubidas.map((f) => recortarProducto(f.img, f.quitar));
   fijarProductos(lista, fotosSubidas.length ? referenciaReducida(fotosSubidas[0].img) : null);
 }
-function renderOpcionesFondo() {
-  const cont = $("opcionesFondo");
-  cont.innerHTML = "";
-  fotosSubidas.forEach((f, i) => {
-    const l = document.createElement("label");
-    const c = document.createElement("input");
-    c.type = "checkbox"; c.checked = !!f.quitar;
-    c.addEventListener("change", () => { f.quitar = c.checked; reconstruirFotos(); });
-    l.appendChild(c);
-    l.appendChild(document.createTextNode(` Foto ${i + 1}: quitar fondo`));
-    cont.appendChild(l);
-  });
-}
+$("dzFotos").addEventListener("click", (e) => {
+  if (e.target.id === "fotos" || e.target.closest(".foto-op")) return;
+  $("fotos").click();
+});
 $("fotos").addEventListener("change", async (e) => {
   const archivos = [...e.target.files];
   if (!archivos.length) return;
@@ -276,7 +282,6 @@ $("fotos").addEventListener("change", async (e) => {
     for (const f of archivos) nuevas.push({ img: await archivoAImagen(f), quitar: false });
     fotosSubidas = nuevas;
     reconstruirFotos();
-    renderOpcionesFondo();
   } catch (err) { error(err.message); }
 });
 
