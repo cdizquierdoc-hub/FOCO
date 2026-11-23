@@ -244,13 +244,12 @@ function archivoABase64(archivo) {
 }
 
 /* Recorte del producto: si ya tiene transparencia la usa; si no, quita el fondo liso desde los bordes */
-// false: la foto se usa tal como se sube (si ya tiene transparencia, se respeta). Así no se borran las partes blancas del producto.
-const RECORTAR_FONDO = false;
-function recortarProducto(img) {
+// Por defecto la foto se usa tal como se sube. Con quitar=true se borra el fondo claro conectado a los bordes.
+function recortarProducto(img, quitar = false) {
   const w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
   const c = document.createElement("canvas");
   c.width = w; c.height = h;
-  if (!RECORTAR_FONDO) { c.getContext("2d").drawImage(img, 0, 0); return c; }
+  if (!quitar) { c.getContext("2d").drawImage(img, 0, 0); return c; }
   const ctx = c.getContext("2d", { willReadFrequently: true });
   ctx.drawImage(img, 0, 0, w, h);
   const datos = ctx.getImageData(0, 0, w, h);

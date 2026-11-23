@@ -229,8 +229,15 @@ function renderPropiedades() {
       const el = imagenEl(img, { x: (W - w) / 2, y: (H - h) / 2, w, h });
       s.elementos.push(el); editor.selId = el.id;
     });
+    const quitarNueva = document.createElement("input");
+    quitarNueva.type = "checkbox";
+    const etqQuitar = document.createElement("label");
+    etqQuitar.className = "quitar-fondo-nueva";
+    etqQuitar.appendChild(quitarNueva);
+    etqQuitar.appendChild(document.createTextNode(" Quitar fondo a la foto que inserte"));
+    agregar(etqQuitar);
     botonArchivo("+ Insertar foto de producto", async (img) => {
-      agregarFotoProducto(recortarProducto(img));
+      agregarFotoProducto(recortarProducto(img, quitarNueva.checked));
     });
     boton("+ Agregar foto de producto existente", () => {
       guardar();

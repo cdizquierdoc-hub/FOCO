@@ -249,18 +249,34 @@ function fijarProductos(lista, referencia) {
   validar();
 }
 
+/* Fotos subidas con su opción de quitar fondo (cada una se decide por separado) */
+let fotosSubidas = [];
+function reconstruirFotos() {
+  const lista = fotosSubidas.map((f) => recortarProducto(f.img, f.quitar));
+  fijarProductos(lista, fotosSubidas.length ? referenciaReducida(fotosSubidas[0].img) : null);
+}
+function renderOpcionesFondo() {
+  const cont = $("opcionesFondo");
+  cont.innerHTML = "";
+  fotosSubidas.forEach((f, i) => {
+    const l = document.createElement("label");
+    const c = document.createElement("input");
+    c.type = "checkbox"; c.checked = !!f.quitar;
+    c.addEventListener("change", () => { f.quitar = c.checked; reconstruirFotos(); });
+    l.appendChild(c);
+    l.appendChild(document.createTextNode(` Foto ${i + 1}: quitar fondo`));
+    cont.appendChild(l);
+  });
+}
 $("fotos").addEventListener("change", async (e) => {
   const archivos = [...e.target.files];
   if (!archivos.length) return;
   try {
-    const lista = [];
-    let referencia = null;
-    for (const f of archivos) {
-      const img = await archivoAImagen(f);
-      if (!referencia) referencia = referenciaReducida(img);
-      lista.push(recortarProducto(img));
-    }
-    fijarProductos(lista, referencia);
+    const nuevas = [];
+    for (const f of archivos) nuevas.push({ img: await archivoAImagen(f), quitar: false });
+    fotosSubidas = nuevas;
+    reconstruirFotos();
+    renderOpcionesFondo();
   } catch (err) { error(err.message); }
 });
 
