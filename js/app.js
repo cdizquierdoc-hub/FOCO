@@ -34,16 +34,34 @@ document.querySelectorAll(".dz input[type=file]").forEach((inp) => {
   ["dragleave", "drop"].forEach((ev) => zona.addEventListener(ev, () => zona.classList.remove("over")));
 });
 
+/* Convierte el error técnico del servicio de IA en un mensaje claro para cualquier persona */
+function explicarErrorIA(detalle) {
+  const d = String(detalle || "");
+  if (/neuron|allocation|cuota|quota|usage limit|rate limit/i.test(d))
+    return "Se agotó el uso gratuito diario del servicio de IA. Vuelve a intentarlo mañana (se renueva a las 19:00 en Guayaquil) o avisa al administrador de la herramienta para activar el plan de pago.";
+  if (/deprecated|retirad|5028/i.test(d))
+    return "El modelo de IA que usa la herramienta ya no está disponible. Avisa al administrador para actualizarla.";
+  if (/binding|configur/i.test(d))
+    return "La herramienta no está configurada correctamente. Avisa al administrador.";
+  return "El servicio de IA tuvo un problema y no pudo terminar. Vuelve a intentarlo en unos minutos.";
+}
 async function llamarWorker(ruta, cuerpo) {
   const base = URL_BASE();
-  if (!base) throw new Error("Falta la dirección del intermediario (Cloudflare Worker).");
-  const resp = await fetch(base + ruta, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(cuerpo) });
+  if (!base) throw new Error("La herramienta no tiene dirección del servicio. Avisa al administrador.");
+  let resp;
+  try {
+    resp = await fetch(base + ruta, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(cuerpo) });
+  } catch (e) {
+    console.error("Fallo de red", base + ruta, e);
+    throw new Error("No se pudo conectar con el servicio de IA. Revisa tu conexión a internet y vuelve a intentar.");
+  }
   const texto = await resp.text();
   let datos = {};
   try { datos = JSON.parse(texto); } catch (e) { datos = {}; }
   if (!resp.ok) {
-    const detalle = datos.error || texto.replace(/\s+/g, " ").slice(0, 160) || "(respuesta vacía)";
-    throw new Error(`Error ${resp.status} en ${base}${ruta}: ${detalle}`);
+    const detalle = datos.error || texto.replace(/\s+/g, " ").slice(0, 300) || "(respuesta vacía)";
+    console.error(`Error ${resp.status} en ${base}${ruta}: ${detalle}`);
+    throw new Error(explicarErrorIA(detalle));
   }
   return datos;
 }
@@ -62,7 +80,7 @@ async function obtenerAmbiente(tipo, descripcion) {
   }
   {
     const e = ultimo;
-    error((($("error").textContent) ? $("error").textContent + "\n" : "") + `No se pudo generar el ambiente "${tipo}" con IA (se usó un fondo de respaldo). Motivo: ${e.message}`);
+    error((($("error").textContent) ? $("error").textContent + "\n" : "") + `No se pudo crear el fondo "${tipo}" con IA; se usó un fondo de respaldo. ${e.message}`);
     return escenaRespaldo(tipo);
   }
 }
