@@ -2,7 +2,7 @@
    Editor tipo Canva: seleccionar, mover, cambiar tamaño y rotar desde cada esquina,
    editar texto con doble clic, insertar imágenes y fotos de producto, ordenar capas y deshacer
    ========================================================================== */
-const editor = { slides: [], actual: 0, selId: null, historial: [], modo: null };
+const editor = { slides: [], actual: 0, selId: null, historial: [], modo: null, capasAbierto: false };
 const ESQUINAS = [[-1, -1], [1, -1], [1, 1], [-1, 1]]; // superior izq., superior der., inferior der., inferior izq.
 const RADIO_MANIJA = 26;
 
@@ -209,6 +209,7 @@ function renderPropiedades() {
     boton(texto, () => f.click());
   };
 
+  panelCapas(s, agregar);
   if (!e) {
     titulo(`Lámina ${editor.actual + 1}: ${s.nombre}`);
     campo("Color de fondo", ctl("input", { type: "color", value: s.fondo || BLANCO }, (v) => { s.fondo = v; }));
@@ -311,6 +312,50 @@ function renderPropiedades() {
     guardar(); const a = s.elementos; a.splice(a.indexOf(e), 1); a.unshift(e); refrescarTodo();
   });
   botonFila("Eliminar", eliminarSeleccion, "peligro");
+}
+
+/* ---------- Panel de capas (desplegable): arrastra para ordenar; arriba = frente ---------- */
+function etiquetaCapa(el) {
+  if (el.tipo === "texto") { const t = (el.texto || "").replace(/\s+/g, " ").trim(); return "Texto: " + (t.length > 24 ? t.slice(0, 24) + "…" : t || "(vacío)"); }
+  return etiquetaTipo(el) + (el.fondo ? " (fondo)" : "");
+}
+function panelCapas(s, agregar) {
+  const det = document.createElement("details");
+  det.className = "capas";
+  det.open = !!editor.capasAbierto;
+  det.addEventListener("toggle", () => { editor.capasAbierto = det.open; });
+  const sum = document.createElement("summary");
+  sum.textContent = "Capas (arrastra para ordenar)";
+  det.appendChild(sum);
+  const lista = document.createElement("ul");
+  lista.className = "lista-capas";
+  s.elementos.slice().reverse().forEach((el) => {
+    const li = document.createElement("li");
+    li.draggable = true;
+    li.className = (el.id === editor.selId ? "act" : "");
+    li.textContent = etiquetaCapa(el);
+    li.addEventListener("click", () => { editor.selId = el.id; refrescarTodo(); });
+    li.addEventListener("dragstart", (ev) => { ev.dataTransfer.setData("text/plain", el.id); ev.dataTransfer.effectAllowed = "move"; li.classList.add("arr"); });
+    li.addEventListener("dragend", () => li.classList.remove("arr"));
+    li.addEventListener("dragover", (ev) => { ev.preventDefault(); ev.dataTransfer.dropEffect = "move"; li.classList.add("sobre"); });
+    li.addEventListener("dragleave", () => li.classList.remove("sobre"));
+    li.addEventListener("drop", (ev) => {
+      ev.preventDefault();
+      li.classList.remove("sobre");
+      const origen = s.elementos.find((x) => x.id === ev.dataTransfer.getData("text/plain"));
+      if (!origen || origen === el) return;
+      guardar();
+      const a = s.elementos;
+      a.splice(a.indexOf(origen), 1);
+      // Se suelta justo encima de la capa destino
+      a.splice(a.indexOf(el) + 1, 0, origen);
+      editor.selId = origen.id;
+      refrescarTodo();
+    });
+    lista.appendChild(li);
+  });
+  det.appendChild(lista);
+  agregar(det);
 }
 
 function etiquetaTipo(e) {

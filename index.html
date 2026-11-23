@@ -97,6 +97,12 @@
   .mini-item canvas { width:100%; display:block; border-radius:7px; margin-bottom:4px; }
   .lienzo-wrap { background:#e9eff6; border-radius:18px; padding:14px; position:relative; }
   #lienzo { width:100%; height:auto; display:block; border-radius:10px; background:#fff; touch-action:none; box-shadow:0 6px 18px rgba(23,38,79,.12); }
+  .capas summary { cursor:pointer; font-weight:700; color:var(--marino); font-size:14px; }
+  .lista-capas { list-style:none; margin:10px 0 0; padding:0; display:grid; gap:6px; }
+  .lista-capas li { padding:8px 10px; border:1px solid var(--borde); border-radius:10px; background:#f7fafd; cursor:grab; font-size:13px; color:var(--marino); }
+  .lista-capas li.act { border-color:var(--azul); background:#e8f4fc; }
+  .lista-capas li.sobre { border-top:3px solid var(--azul); }
+  .lista-capas li.arr { opacity:.45; }
   .props { background:#fff; border:1px solid var(--borde); border-radius:18px; padding:16px; display:grid; gap:12px; align-content:start; }
   .props h3 { margin:0; font-size:14px; color:var(--marino); }
   .editor > *, .props { min-width:0; }
