@@ -115,6 +115,7 @@ $("marca").addEventListener("change", cambiarMarca);
 async function generar() {
   error(""); $("bGen").disabled = true; $("barra").classList.add("on");
   try {
+    if (fotosSubidas.length) estado.productos = productosFinales(); // aquí se quita el fondo a las fotos marcadas
     let ficha;
     if (estado.demo) {
       ficha = JSON.parse(JSON.stringify(FICHA_DEMO));
