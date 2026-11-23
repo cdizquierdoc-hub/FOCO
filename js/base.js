@@ -259,11 +259,9 @@ function recortarProducto(img, quitar = false) {
   if (transparentes > (w * h / 37) * 0.02) return c;
 
   const r0 = d[0], g0 = d[1], b0 = d[2];
-  // Fondo claro (blanco o gris claro): las partes blancas del producto se confunden con el fondo, así que la foto se usa completa
-  if ((r0 + g0 + b0) / 3 > 225) return c;
   const esFondo = (p) => {
     const i = p * 4;
-    return Math.abs(d[i] - r0) + Math.abs(d[i + 1] - g0) + Math.abs(d[i + 2] - b0) < 90;
+    return Math.abs(d[i] - r0) + Math.abs(d[i + 1] - g0) + Math.abs(d[i + 2] - b0) < 40;
   };
   // Solo quita el fondo si el borde de la foto es casi todo de un mismo color; si no, la foto se usa tal cual
   let bordeFondo = 0, bordeTotal = 0;
