@@ -221,9 +221,10 @@ async function imagenWorkersAI(ambiente, env, cors) {
     "iluminación cálida y elegante, enfoque nítido y realista. " +
     "Sin personas, sin electrodomésticos, sin texto ni logotipos, sin bordes ni márgenes. " +
     "Espacio despejado en el centro y a la derecha para colocar un producto. Escena residencial interior, sin producto, que corresponda al tipo de producto: " + ambiente;
-  const negativo = (esClima ? "ropa, prendas, canastas, perchas, toallas, muebles, objetos, cuadros, plantas, marcos, ventana, puerta, cocina, electrodoméstico, ventilador, aire acondicionado, sala, sofá, colores variados, pared de ladrillo, degradado, fondo de estudio, " : "") + (esLavanderia ? "colores variados, rosa, verde, amarillo, naranja, plantas, cuadros, marcos, decoración, muchas prendas, ropa de colores, sala, sofá, sillón, living, mesa de centro, comedor, cama, dormitorio, lavadora, secadora, electrodoméstico, aparato, máquina, cuarto vacío, estudio, pared de concreto, bodega, almacén, warehouse, galpón, concreto, cocina, estufa, fregadero, encimera de mármol, " : "") + "estilo clásico, lujoso, ornamentos, molduras, lámpara de cristal, mármol con vetas, alfombra persa, pared de ladrillo, fondo de estudio, degradado, fondo gris, fondo oscuro, isla, mesa en primer plano, barra, sala, sofá, televisor, cama, dormitorio, baño, personas, texto, logotipo, exterior, calle, borroso, ilustración, collage, marco, bordes, electrodoméstico, refrigeradora, lavadora";
-  const res = await env.AI.run("@cf/stabilityai/stable-diffusion-xl-base-1.0", {
-    prompt, negative_prompt: negativo, width: 1344, height: 768
+  // SDXL fue retirado el 2026-11-20; Flux-1 Schnell no usa lista de negativos, así que las restricciones van en el texto
+  const res = await env.AI.run("@cf/black-forest-labs/flux-1-schnell", {
+    prompt: prompt + ". Imagen horizontal de alta calidad, sin texto, sin logotipos, sin marcas de agua, sin personas.",
+    steps: 8
   });
   if (res && typeof res.image === "string") {
     return json({ imagen_base64: res.image, media_type: "image/png", incluye_producto: false }, 200, cors);
