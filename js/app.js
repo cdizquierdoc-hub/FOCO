@@ -203,7 +203,7 @@ async function datosFichaHistorial(ficha, amb, feats) {
   return {
     ficha, feats, marca: marcaSeleccionada(),
     ambientes: Object.fromEntries(Object.entries(amb).map(([k, img]) => [k, imagenAURL(img, 1344, "image/jpeg")])),
-    fotos: estado.productos.map((c) => c.toDataURL("image/png"))
+    fotos: productosFinales().map((c) => c.toDataURL("image/png"))
   };
 }
 
@@ -241,7 +241,7 @@ function referenciaReducida(img) {
 }
 function fijarProductos(lista, referencia) {
   estado.productos = lista;
-  estado.miniaturas = lista.map((c) => c.toDataURL("image/png"));
+  estado.miniaturas = lista.map(miniaturaRapida);
   const cont = $("miniFotos");
   cont.innerHTML = "";
   const conOpciones = fotosSubidas.length === lista.length;
@@ -255,7 +255,13 @@ function fijarProductos(lista, referencia) {
       b.type = "button";
       b.className = "btn-fondo" + (fotosSubidas[i].quitar ? " on" : "");
       b.textContent = fotosSubidas[i].quitar ? "Sin fondo ✓" : "Quitar fondo";
-      b.addEventListener("click", (ev) => { ev.preventDefault(); ev.stopPropagation(); fotosSubidas[i].quitar = !fotosSubidas[i].quitar; reconstruirFotos(); });
+      b.addEventListener("click", (ev) => {
+        ev.preventDefault(); ev.stopPropagation();
+        const f = fotosSubidas[i];
+        f.quitar = !f.quitar;
+        b.className = "btn-fondo" + (f.quitar ? " on" : "");
+        b.textContent = f.quitar ? "Sin fondo ✓" : "Quitar fondo";
+      });
       celda.appendChild(b);
     }
     cont.appendChild(celda);
@@ -264,10 +270,21 @@ function fijarProductos(lista, referencia) {
   validar();
 }
 
-/* Fotos subidas con su opción de quitar fondo (cada una se decide por separado) */
+/* Fotos subidas con su opción de quitar fondo (cada una se decide por separado).
+   El procesamiento del fondo se hace al generar la ficha, no al hacer clic. */
 let fotosSubidas = [];
+function miniaturaRapida(c) {
+  const m = document.createElement("canvas");
+  m.height = 160; m.width = Math.round(160 * c.width / c.height);
+  m.getContext("2d").drawImage(c, 0, 0, m.width, m.height);
+  return m.toDataURL("image/png");
+}
+function productosFinales() {
+  if (!fotosSubidas.length) return estado.productos;
+  return fotosSubidas.map((f) => f.quitar ? (f.proc || (f.proc = recortarProducto(f.img, true))) : f.base);
+}
 function reconstruirFotos() {
-  const lista = fotosSubidas.map((f) => recortarProducto(f.img, f.quitar));
+  const lista = fotosSubidas.map((f) => f.base);
   fijarProductos(lista, fotosSubidas.length ? referenciaReducida(fotosSubidas[0].img) : null);
 }
 $("dzFotos").addEventListener("click", (e) => {
@@ -279,7 +296,10 @@ $("fotos").addEventListener("change", async (e) => {
   if (!archivos.length) return;
   try {
     const nuevas = [];
-    for (const f of archivos) nuevas.push({ img: await archivoAImagen(f), quitar: false });
+    for (const f of archivos) {
+      const img = await archivoAImagen(f);
+      nuevas.push({ img, quitar: false, base: recortarProducto(img, false), proc: null });
+    }
     fotosSubidas = nuevas;
     reconstruirFotos();
   } catch (err) { error(err.message); }
